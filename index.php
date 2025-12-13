@@ -23,7 +23,7 @@
         .welcome-card {
             background: white;
             border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(111, 78, 55, 0.2); /* Bóng màu nâu */
+            box-shadow: 0 10px 30px rgba(111, 78, 55, 0.2); 
             padding: 40px;
             width: 100%;
             max-width: 500px;

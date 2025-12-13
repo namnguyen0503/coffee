@@ -28,7 +28,7 @@
             width: 100%;
             max-width: 500px;
             text-align: center;
-            border-top: 5px solid #6f4e37; /* Viền trên màu cà phê */
+            border-top: 5px solid #6f4e37; 
         }
 
         .brand-title {

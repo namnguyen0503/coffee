@@ -34,7 +34,7 @@ return $total;
 </head>
 <body>
     <div class="price-fullscreen-container">
-        <h1>Nay cũng lãi</h1>
+        <h1>Tổng doanh thu</h1>
         
         <p class="price-value">
             <?php 

@@ -1,8 +1,4 @@
 <!DOCTYPE html>
-<!--
-This is a starter template page. Use this page to start your new project from
-scratch. This page gets rid of all links and provides the needed markup only.
--->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -21,8 +17,8 @@ scratch. This page gets rid of all links and provides the needed markup only.
     />
 
     <link rel="stylesheet" href="./assets/dist/css/adminlte.min.css" />
-    <!-- TEST -->
-    <link rel="stylesheet" href="./test.css" />
+    
+    <link rel="stylesheet" href="./display-item.css" />
   </head>
   <body class="hold-transition sidebar-mini">
     <div class="wrapper">
@@ -124,25 +120,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                 style="width: 500px; "
               />
             </div>
-          </div>
-
-          <!-- SidebarSearch Form -->
-          <div class="form-inline">
-            <div class="input-group" data-widget="sidebar-search">
-              <input
-                class="form-control form-control-sidebar"
-                type="search"
-                placeholder="Search"
-                aria-label="Search"
-              />
-              <div class="input-group-append">
-                <button class="btn btn-sidebar">
-                  <i class="fas fa-search fa-fw"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-
+          </div>          
           <!-- Sidebar Menu -->
           <nav class="mt-2">
             <ul
@@ -170,9 +148,15 @@ scratch. This page gets rid of all links and provides the needed markup only.
                   </li>
                   <li class="nav-item">
                     <!------------------------ link đến trang oder ------------------------>
-                    <a href="#" class="nav-link">
+                    <a href="" class="nav-link">
                       <i class="far fa-circle nav-icon"></i>
                       <p>Oder</p>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="./export.php" class="nav-link">
+                      <i class="far fa-circle nav-icon"></i>
+                      <p>Xuất Excel</p>
                     </a>
                   </li>
                 </ul>
@@ -327,9 +311,9 @@ scratch. This page gets rid of all links and provides the needed markup only.
       <!-- Main Footer -->
       <footer class="main-footer">
         <!-- To the right -->
-        <div class="float-right d-none d-sm-inline">.....</div>
+        <div class="float-right d-none d-sm-inline">coffee Nguyễn Văn</div>
         <!-- Default to the left -->
-        <strong>địa chỉ </strong>
+        <strong>Địa chỉ: 147 Văn Cao </strong>
       </footer>
     </div>
     <!-- ./wrapper -->

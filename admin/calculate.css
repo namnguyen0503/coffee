@@ -1,0 +1,82 @@
+body,
+html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: "Montserrat", Arial, sans-serif; /* Sử dụng font hiện đại */
+}
+
+/* 2. Style cho khung bao ngoài (.price) chiếm toàn màn hình */
+.price-fullscreen-container {
+  /* Chiều rộng và chiều cao 100% màn hình */
+  width: 100%;
+  min-height: 100vh;
+
+  /* Sử dụng Flexbox để căn giữa nội dung cả dọc và ngang */
+  display: flex;
+  flex-direction: column; /* Xếp nội dung từ trên xuống dưới */
+  justify-content: center; /* Căn giữa theo chiều dọc */
+  align-items: center; /* Căn giữa theo chiều ngang */
+
+  /* Màu nền gradient hiện đại (Xanh tím than sang trọng) */
+  background: linear-gradient(135deg, #1a2a6c, #b21f1f, #816323);
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite; /* Hiệu ứng nền chuyển động nhẹ */
+  color: #fff; /* Màu chữ trắng */
+  text-align: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Hiệu ứng nền chuyển động */
+@keyframes gradientBG {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* 3. Style cho tiêu đề H1 */
+.price-fullscreen-container h1 {
+  font-size: 2.5rem; /* Kích thước chữ lớn */
+  font-weight: 400;
+  text-transform: uppercase; /* Chữ in hoa */
+  letter-spacing: 3px; /* Khoảng cách giữa các chữ cái */
+  margin-bottom: 30px; /* Khoảng cách với số tiền bên dưới */
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); /* Bóng chữ nhẹ */
+}
+
+/* 4. Style cho số tiền (thẻ P) */
+.price-fullscreen-container p.price-value {
+  font-size: 5rem; /* Số tiền phải thật to */
+  font-weight: 700; /* In đậm */
+  margin: 0;
+
+  /* Tạo màu vàng kim loại cho số tiền */
+  color: #ffd700;
+  text-shadow: 0px 4px 3px rgba(0, 0, 0, 0.4), 0px 8px 13px rgba(0, 0, 0, 0.1),
+    0px 18px 23px rgba(0, 0, 0, 0.1); /* Hiệu ứng bóng đổ 3D */
+
+  /* Tạo khung bao quanh số tiền cho nổi bật */
+  background: rgba(0, 0, 0, 0.2); /* Nền đen mờ */
+  padding: 20px 50px;
+  border-radius: 50px; /* Bo tròn góc dạng viên thuốc */
+  border: 2px solid rgba(255, 215, 0, 0.3); /* Viền vàng mờ */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); /* Bóng đổ cho khung */
+}
+
+/* Responsive cho màn hình điện thoại */
+@media (max-width: 768px) {
+  .price-fullscreen-container h1 {
+    font-size: 1.8rem;
+  }
+  .price-fullscreen-container p.price-value {
+    font-size: 3rem;
+    padding: 15px 30px;
+  }
+}

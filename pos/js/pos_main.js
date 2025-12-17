@@ -219,7 +219,7 @@ console.log('   Dữ liệu JSON thô (body):', JSON.stringify(checkoutData));
         return;
     }
     
-    alert(`Thanh toán thành công! Order ID: ${data.order_id}. Vui lòng in hóa đơn.`);
+    alert(`Thanh toán thành công! Order ID: ${data.order_id}. Tổng tiền: ${total.toLocaleString('vi-VN')} đ`);
     
     cartItems = [];
     localStorage.removeItem(CART_STORAGE_KEY);

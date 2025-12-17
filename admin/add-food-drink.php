@@ -20,9 +20,7 @@ function add_products($name, $price, $category_id, $image_url, $is_active){
 }
 
 
-// =============================================
-// XỬ LÝ THÊM CATEGORIES
-// =============================================
+
 if(isset($_POST['sub-categories'])){
 
     $name = $_POST['name-categories'] ?? '';
@@ -40,20 +38,18 @@ if(isset($_POST['sub-categories'])){
 
 
 
-// =============================================
-// XỬ LÝ THÊM PRODUCTS (CÓ UPLOAD FILE)
-// =============================================
+
 if(isset($_POST['sub-products'])){
 
     $errors = [];
 
-    // Lấy dữ liệu text
+    
     $data['name'] = $_POST['name'] ?? '';
     $data['price'] = $_POST['price'] ?? '';
     $data['category_id'] = $_POST['category_id'] ?? '';
     $data['is_active'] = $_POST['is_active'] ?? '';
 
-    // KIỂM TRA DỮ LIỆU
+    
     if(empty($data['name']))      $errors['name'] = "Hãy nhập tên";
     if(empty($data['price']))     $errors['price'] = "Hãy nhập giá tiền";
     if(empty($data['category_id'])) $errors['category_id'] = "Hãy nhập category id";
@@ -62,30 +58,25 @@ if(isset($_POST['sub-products'])){
     // =============================================
     // XỬ LÝ UPLOAD FILE
     // =============================================
-
-    // =============================================
-    // XỬ LÝ UPLOAD FILE (ĐÃ NÂNG CẤP)
-    // =============================================
-
     if (isset($_FILES['image-url']) && $_FILES['image-url']['error'] == UPLOAD_ERR_OK) {
 
         $file_tmp = $_FILES['image-url']['tmp_name'];
         $file_name = $_FILES['image-url']['name'];
         $file_size = $_FILES['image-url']['size'];
 
-        // 1. Tách đuôi file để kiểm tra
+        
         $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
 
-        // 2. Danh sách đuôi file cho phép
+        
         $allowed_ext = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 
-        // 3. Kiểm tra định dạng ảnh
+        
         if (in_array($file_ext, $allowed_ext)) {
 
-            // 4. Kiểm tra kích thước (Ví dụ: giới hạn 5MB = 5 * 1024 * 1024)
+            
             if ($file_size < 5242880) {
 
-                // 5. Tạo tên file mới an toàn hơn (chỉ dùng time và đuôi file)
+               
                 
                 $new_name = time() . '.' . $file_ext; 
                 $upload_dir = "uploads/";
@@ -112,21 +103,19 @@ if(isset($_POST['sub-products'])){
         }
 
     } else {
-        // Bắt buộc phải chọn ảnh
+        
         $errors['image-url'] = "Hãy chọn một file ảnh.";
     }
 
 
-    // =============================================
-    // NẾU KHÔNG CÓ LỖI => LƯU DATABASE
-    // =============================================
+    
     if(!$errors){
 
         add_products(
             $data['name'],
             $data['price'],
             $data['category_id'],
-            $data['image-url'],     // ĐƯỜNG DẪN FILE ĐÃ UPLOAD
+            $data['image-url'],    
             $data['is_active']
         );
 
@@ -145,7 +134,7 @@ if(isset($_POST['sub-products'])){
 </head>
 <body>
     <a href="./drink-display.php">home</a>
-    <!-- thêm vào categories -->
+    
     <div class="categories">
     <h1>Thêm vào categories</h1>
     <form action="" method="post">
@@ -155,27 +144,33 @@ if(isset($_POST['sub-products'])){
     </form>
     </div>
 
-    <!-- thêm vào product -->
+   
     <div class="products">
     <h1>Thêm vào products</h1>
 
-    <!-- BẮT BUỘC CÓ enctype="multipart/form-data" -->
+    
     <form action="" method="post" enctype="multipart/form-data">
 
-        Name: <input type="text" name="name" value=""> <br>
-        Price: <input type="number" name="price" value=""><br>
+        Name: <input type="text" name="name" value="<?php if(isset($_POST['name'])) echo $_POST['name'];?>">
+        <?php if(!empty($errors['name'])) echo $errors['name']; ?>
+        <br>
+        Price: <input type="number" name="price" value="<?php if(isset($_POST['price'])) echo $_POST['price']; ?>">
+        <?php if(!empty($errors['price'])) echo $errors['price']; ?>
+        <br>
 
         Category_id 
         <select name="category_id">
-            <option value="1">Đồ ăn</option>
-            <option value="2">Đồ uống</option>
+            <option value="1" <?php if(isset($_POST['category_id']) && $_POST['category_id'] ==1) echo 'select'; ?>>Đồ ăn</option>
+            <option value="2" <?php if(isset($_POST['category_id']) && $_POST['category_id'] ==2) echo 'select'; ?>>Đồ uống</option>
         </select><br>
 
-        Image_url: <input type="file" name="image-url"><br>
+        Image_url: <input type="file" name="image-url" value="<?php if(isset($_FILES['image-url'])) echo $_FILES['image-url'];?>">
+        <?php if(!empty($errors['image-url'])) echo $errors['image-url']; ?>
+        <br>
 
         <select name="is_active">
-            <option value="1">Còn hàng</option>
-            <option value="0">Hết hàng</option>
+            <option value="1" <?php if(isset($_POST['is_active']) && $_POST['is_active'] ==1) echo 'select'; ?>>Còn hàng</option>
+            <option value="0" <?php if(isset($_POST['is_active']) && $_POST['is_active'] ==0) echo 'select'; ?>>Hết hàng</option>
         </select><br>
 
         <input type="submit" name="sub-products" value="Gửi">

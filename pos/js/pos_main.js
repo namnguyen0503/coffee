@@ -180,62 +180,133 @@ document.addEventListener('DOMContentLoaded', loadCartFromStorage);
 
 
 
+// function handleCheckout() {
+//     if (cartItems.length === 0) {
+//         alert("Giỏ hàng rỗng! Vui lòng chọn món trước khi thanh toán.");
+//         return;
+//     }
+
+
+//     if(confirm("Xác nhận thanh toán đơn hàng?")) {
+//         const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    
+//     const checkoutData = {
+//         action: 'checkout', 
+//         table_id: 1, 
+//         total_price: total,
+//         items: cartItems 
+//     };
+
+// console.log('BƯỚC AJAX: Dữ liệu gửi đi:', checkoutData);
+// console.log('   Dữ liệu JSON thô (body):', JSON.stringify(checkoutData)); 
+    
+//     fetch('../core/order_processor.php', {
+//     method: 'POST',
+//     headers: {
+//         'Content-Type': 'application/json'
+//     },
+//     body: JSON.stringify(checkoutData)
+// })
+// .then(response => {
+//     if (!response.ok) {
+//         throw new Error('Lỗi Mạng hoặc Server ' + response.status);
+//     }
+//     return response.json(); 
+// }) 
+// .then(data => {
+//     if (data.success === false) { 
+//         alert(` LỖI XỬ LÝ ĐƠN HÀNG: ${data.message}`);
+//         return;
+//     }
+    
+//     alert(`Thanh toán thành công! Order ID: ${data.order_id}. Tổng tiền: ${total.toLocaleString('vi-VN')} đ`);
+    
+//     cartItems = [];
+//     localStorage.removeItem(CART_STORAGE_KEY);
+//     renderCart();
+//     updateTotalAmount();
+//     console.log('id: ' + data.order_id);
+//     order_id.textContent = Number(data.order_id)+1;
+// })
+// .catch(error => {
+//     console.error('LỖI AJAX/KẾT NỐI:', error);
+//     alert('Đã xảy ra lỗi trong quá trình xử lý. Vui lòng thử lại.');
+// });
+//     }
+//     else {
+//         return; 
+// }
+// }
+
 function handleCheckout() {
+    // 1. Kiểm tra giỏ hàng
     if (cartItems.length === 0) {
         alert("Giỏ hàng rỗng! Vui lòng chọn món trước khi thanh toán.");
         return;
     }
 
-
-    if(confirm("Xác nhận thanh toán đơn hàng?")) {
+    // 2. Xác nhận
+    if (confirm("Xác nhận thanh toán đơn hàng?")) {
+        // Tính tổng tiền
         const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    
-    const checkoutData = {
-        action: 'checkout', 
-        table_id: 1, 
-        total_price: total,
-        items: cartItems 
-    };
 
-console.log('BƯỚC AJAX: Dữ liệu gửi đi:', checkoutData);
-console.log('   Dữ liệu JSON thô (body):', JSON.stringify(checkoutData)); 
-    
-    fetch('../core/order_processor.php', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(checkoutData)
-})
-.then(response => {
-    if (!response.ok) {
-        throw new Error('Lỗi Mạng hoặc Server ' + response.status);
+        // [QUAN TRỌNG] Chuẩn hóa danh sách món ăn để gửi về server
+        // Chỉ cần gửi product_id và quantity, không cần gửi tên hay ảnh
+        const itemsToSend = cartItems.map(item => ({
+            product_id: item.id,  // Lưu ý: Đảm bảo trong cartItems bạn lưu ID là 'id'
+            quantity: item.quantity
+        }));
+
+        // Tạo gói dữ liệu
+        const checkoutData = {
+            // action: 'checkout', // Có thể bỏ nếu server chỉ làm nhiệm vụ order, nhưng giữ lại cũng không sao
+            total_amount: total, // SỬA: Đổi tên key này cho khớp với PHP ($data['total_amount'])
+            items: itemsToSend   // Danh sách đã chuẩn hóa
+        };
+
+        console.log('BƯỚC AJAX: Dữ liệu gửi đi:', checkoutData);
+
+        // 3. Gửi Request
+        fetch('../core/order_processor.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(checkoutData)
+        })
+        .then(response => {
+            // Kiểm tra HTTP status (200 là ok, 404/500 là lỗi)
+            if (!response.ok) {
+                throw new Error('Lỗi Mạng hoặc Server: ' + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Kiểm tra logical status từ server trả về
+            if (data.success === false) {
+                alert(`LỖI XỬ LÝ ĐƠN HÀNG: ${data.message}`);
+                return;
+            }
+
+            // 4. Xử lý khi thành công
+            alert(`Thanh toán thành công!\nMã đơn: ${data.order_id}\nTổng tiền: ${total.toLocaleString('vi-VN')} đ`);
+
+            // Reset giỏ hàng
+            cartItems = [];
+            localStorage.removeItem(CART_STORAGE_KEY);
+            renderCart();
+            updateTotalAmount();
+
+            // Cập nhật hiển thị mã đơn hàng tiếp theo (nếu có element này)
+            if (typeof order_id !== 'undefined') {
+                order_id.textContent = Number(data.order_id) + 1;
+            }
+        })
+        .catch(error => {
+            console.error('LỖI AJAX/KẾT NỐI:', error);
+            alert('Đã xảy ra lỗi kết nối đến máy chủ. Vui lòng kiểm tra console.');
+        });
     }
-    return response.json(); 
-}) 
-.then(data => {
-    if (data.success === false) { 
-        alert(` LỖI XỬ LÝ ĐƠN HÀNG: ${data.message}`);
-        return;
-    }
-    
-    alert(`Thanh toán thành công! Order ID: ${data.order_id}. Tổng tiền: ${total.toLocaleString('vi-VN')} đ`);
-    
-    cartItems = [];
-    localStorage.removeItem(CART_STORAGE_KEY);
-    renderCart();
-    updateTotalAmount();
-    console.log('id: ' + data.order_id);
-    order_id.textContent = Number(data.order_id)+1;
-})
-.catch(error => {
-    console.error('LỖI AJAX/KẾT NỐI:', error);
-    alert('Đã xảy ra lỗi trong quá trình xử lý. Vui lòng thử lại.');
-});
-    }
-    else {
-        return; 
-}
 }
 function handleCancel() {
     if (cartItems.length === 0) {

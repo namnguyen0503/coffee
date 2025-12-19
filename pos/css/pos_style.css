@@ -9,3 +9,336 @@ html {
     margin-bottom: 10px;
 }
 
+/* --- 1. Tút lại cái Card (Khung sản phẩm) --- */
+.product-item {
+    border: none !important; /* Bỏ viền xám mặc định của Bootstrap */
+    border-radius: 20px !important; /* Bo tròn mềm mại hơn */
+    background: white;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05); /* Đổ bóng nhẹ tạo chiều sâu */
+    transition: all 0.3s ease; /* Hiệu ứng mượt mà */
+    overflow: hidden; /* Để ảnh không bị trồi ra khỏi bo góc */
+    height: 100%; /* Đảm bảo các thẻ bằng nhau */
+    position: relative;
+}
+
+/* Hiệu ứng khi di chuột vào món */
+.product-item:hover {
+    transform: translateY(-5px); /* Nhấc nhẹ thẻ lên */
+    box-shadow: 0 15px 30px rgba(111, 78, 55, 0.2); /* Bóng màu nâu cafe */
+    border: 1px solid var(--primary-color) !important;
+}
+
+/* --- 2. Sửa lại Ảnh (Quan trọng nhất) --- */
+.card-img-top {
+    width: 100%;
+    height: 180px; /* Tăng chiều cao lên (cũ chắc tầm 120px) để thấy hết ly nước */
+    object-fit: cover; /* Cực quan trọng: Giúp ảnh lấp đầy khung mà không bị méo */
+    object-position: center; /* Luôn lấy trung tâm bức ảnh */
+    border-bottom: 1px solid #f0f0f0; /* Đường viền mờ ngăn cách với phần chữ */
+    transition: transform 0.5s ease;
+}
+
+/* Zoom nhẹ ảnh khi hover tạo cảm giác tương tác */
+.product-item:hover .card-img-top {
+    transform: scale(1.05);
+}
+
+/* --- 3. Phần Chữ & Giá --- */
+.card-body {
+    padding: 15px !important;
+    text-align: center;
+    background: #fff;
+}
+
+.card-title {
+    font-size: 1rem;
+    font-weight: 700; /* In đậm tên món */
+    color: #333;
+    margin-bottom: 8px;
+    white-space: nowrap; 
+    overflow: hidden;
+    text-overflow: ellipsis; /* Nếu tên dài quá thì hiện dấu ... */
+}
+
+/* Giá tiền phong cách "Tag" */
+.price-tag {
+    display: inline-block;
+    color: #6f4e37; /* Màu nâu chủ đạo */
+    font-weight: 800;
+    font-size: 1.1rem;
+    background: #f4f1ea; /* Nền màu be nhạt */
+    padding: 5px 15px;
+    border-radius: 15px;
+}
+
+/* --- 4. Badge "Tạm hết" (Nếu có) --- */
+.badge-stock {
+    z-index: 10;
+    top: 15px;
+    right: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Tạo nút cộng ảo */
+.product-item::after {
+    content: '+';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0); /* Mặc định ẩn (thu nhỏ) */
+    width: 50px;
+    height: 50px;
+    background: rgba(111, 78, 55, 0.9); /* Màu nâu cafe trong suốt */
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: bold;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: none; /* Để click xuyên qua vào thẻ card */
+    z-index: 5;
+}
+
+/* Khi hover thì hiện nút cộng lên */
+.product-item:hover::after {
+    transform: translate(-50%, -50%) scale(1);
+    top: 40%; /* Đẩy lên phần ảnh chút */
+}
+
+/* --- 1. Khung thẻ (Card) - Dáng cao --- */
+.product-item {
+    border: none !important;
+    border-radius: 20px !important;
+    background: white;
+    /* Bóng đổ nhẹ hơn để nhìn hiện đại */
+    box-shadow: 0 5px 15px rgba(0,0,0,0.03); 
+    transition: all 0.3s ease;
+    overflow: hidden;
+    height: 100%; 
+    display: flex;       /* Dùng flex để chia dọc */
+    flex-direction: column; 
+}
+
+.product-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(111, 78, 55, 0.15);
+    border: 1px solid var(--primary-color) !important;
+}
+
+/* --- 2. Ảnh sản phẩm (QUAN TRỌNG NHẤT) --- */
+.card-img-top {
+    width: 100%;
+    /* TĂNG CHIỀU CAO: Trước đây là 120-140px, giờ lên 220px */
+    height: 300px !important; 
+    
+    /* object-fit: cover giúp ảnh lấp đầy khung mà không bị méo */
+    object-fit: cover; 
+    
+    /* Canh giữa ảnh để luôn lấy được phần trung tâm của ly nước */
+    object-position: center center; 
+    
+    border-bottom: 1px solid #f8f9fa;
+    transition: transform 0.5s ease;
+}
+
+/* Hiệu ứng zoom nhẹ khi di chuột */
+.product-item:hover .card-img-top {
+    transform: scale(1.08); /* Zoom nhẹ hơn chút để đỡ chóng mặt */
+}
+
+/* --- 3. Phần thông tin bên dưới (Gọn gàng lại) --- */
+.card-body {
+    padding: 12px 10px !important; /* Thu nhỏ padding để dành đất cho ảnh */
+    text-align: center;
+    background: #fff;
+    flex-grow: 1; /* Đẩy phần này xuống đáy */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Căn giữa nội dung dọc */
+}
+
+.card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #4a4a4a;
+    margin-bottom: 8px;
+    /* Giới hạn tên món 2 dòng, nếu dài quá thì ... */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.3;
+}
+
+.price-tag {
+    display: inline-block;
+    color: #6f4e37;
+    font-weight: 800;
+    font-size: 1.15rem;
+}
+
+/* --- 4. Badge "Tạm hết" --- */
+.badge-stock {
+    position: absolute;
+    top: 10px;
+    left: 10px; /* Đổi sang trái nhìn cho giống ShopeeFood */
+    background: rgba(220, 53, 69, 0.9);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    z-index: 10;
+    backdrop-filter: blur(2px);
+}
+
+/* --- CẬP NHẬT CSS CHO CHẾ ĐỘ 6 MÓN/HÀNG --- */
+
+.card-img-top {
+    width: 100%;
+    /* Giảm chiều cao xuống chút vì bề ngang thẻ đã bé lại */
+    /* Nếu để 220px như cũ nhìn sẽ bị dài ngoằng như cái thước kẻ */
+    height: 400px !important; 
+    object-fit: fill; 
+    object-position: center bottom; /* Lấy phần đáy ly nước cho đẹp */
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.card-body {
+    padding: 8px 4px !important; /* Giảm padding để tận dụng không gian */
+}
+
+.card-title {
+    font-size: 0.85rem; /* Giảm font chữ tên món xuống */
+    font-weight: 700;
+    margin-bottom: 4px;
+    height: 2.4em; /* Cố định chiều cao tên món (khoảng 2 dòng) */
+    line-height: 1.2;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.price-tag {
+    font-size: 1rem; /* Giảm font giá tiền một chút */
+    padding: 2px 10px;
+}
+
+/* Chỉnh lại nút badge "Tạm hết" cho nhỏ lại */
+.badge-stock {
+    font-size: 0.65rem;
+    padding: 3px 6px;
+}
+
+/* Tắt mũi tên tăng giảm mặc định xấu xí của input number trên trình duyệt */
+.quantity-input::-webkit-outer-spin-button,
+.quantity-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+.quantity-input {
+  -moz-appearance: textfield;
+  border: 1px solid #ced4da;
+  color: var(--primary-color);
+}
+
+.quantity-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(111, 78, 55, 0.25);
+}
+
+.stock-remaining {
+    position: absolute;
+    top: 10px;
+    right: 10px; /* Đặt bên phải */
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    z-index: 20;
+    backdrop-filter: blur(2px);
+    transition: background 0.3s;
+}
+
+/* Khi sắp hết hàng (còn < 5) thì đổi màu đỏ */
+.stock-remaining.low-stock {
+    background: rgba(220, 53, 69, 0.9);
+    animation: pulse 2s infinite;
+}
+
+/* Class disabled khi hết nguyên liệu (Ghi đè class cũ) */
+.product-item.out-of-stock-material {
+    opacity: 0.5;
+    pointer-events: none; /* Không cho click */
+    filter: grayscale(1);
+}
+/* Thêm vào phần style của bạn */
+.product-item {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); /* Hiệu ứng mượt */
+}
+
+.product-item.out-of-stock-material {
+    opacity: 0.4;
+    filter: grayscale(1) blur(1px);
+    transform: scale(0.96); /* Hiệu ứng thu nhỏ nhẹ khi hết hàng */
+    pointer-events: none;
+}
+
+/* Hiệu ứng rung nhẹ khi nhập quá số lượng cho phép */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+.input-error {
+    animation: shake 0.2s darkred;
+    border-color: red !important;
+}
+
+/* =============================================================
+   IN HÓA ĐƠN (FIX LỖI TRANG TRẮNG & KHỔ GIẤY)
+   ============================================================= */
+@media print {
+    /* 1. Thiết lập khổ giấy cho máy in (Quan trọng) */
+    @page {
+        size: 80mm auto; /* Ép khổ rộng 80mm, chiều dài tự động */
+        margin: 0mm; /* Bỏ lề mặc định của trình duyệt */
+    }
+
+    /* 2. Ẩn TOÀN BỘ giao diện web */
+    body {
+        visibility: hidden;
+        background-color: #fff; /* Đảm bảo nền trắng */
+    }
+
+    /* 3. Ẩn tất cả các con của body */
+    body * {
+        visibility: hidden;
+    }
+
+    /* 4. Chỉ hiển thị duy nhất cái Hóa đơn */
+    #invoice-pos {
+        display: block !important; /* QUAN TRỌNG: Ghi đè style="display:none" trong HTML */
+        visibility: visible !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%; /* Full khổ giấy 80mm */
+        margin: 0;
+        padding: 5px; /* Cách lề 1 xíu cho đẹp */
+        background-color: white;
+        z-index: 99999; /* Đè lên tất cả */
+    }
+    
+    /* Hiển thị nội dung bên trong hóa đơn */
+    #invoice-pos * {
+        visibility: visible !important;
+    }
+}

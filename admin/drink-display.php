@@ -148,9 +148,9 @@
                   </li>
                   <li class="nav-item">
                     <!------------------------ link đến trang oder ------------------------>
-                    <a href="" class="nav-link">
+                    <a href="../pos/index.php" class="nav-link">
                       <i class="far fa-circle nav-icon"></i>
-                      <p>Oder</p>
+                      <p>Order</p>
                     </a>
                   </li>
                   <li>
@@ -184,12 +184,12 @@
               <!-- ============================ -->
               <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
-                  <li class="breadcrumb-item"><a href="./drink-display.php"> <i class="nav-icon fas fa-coffee"></i><p>Đồ uống</p></a></li>
+                  <li class="breadcrumb-item"><a href="./drink-display.php"> <i class="nav-icon fas fa-hamburger"></i>
+                          <p>Đồ ăn</p></a></li>
                   <!-------------- link đến trang drink ------------>
                   <li class="breadcrumb-item active">
                   <a href="javascript:void(0)" class="nav-link" onclick="taiNoiDung('do_an')">
-                          <i class="nav-icon fas fa-hamburger"></i>
-                          <p>Đồ ăn</p>
+                          <i class="nav-icon fas fa-coffee"></i><p>Đồ uống</p>
                         </a>  
                         <!-------------- link đến trang food ------------>
                   </li>

@@ -9,12 +9,22 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+
+
 // 2. Lấy danh mục
 $categories = $mysqli->query("SELECT * FROM categories");
 
 // 3. Lấy sản phẩm (Lọc is_active = 1 để chỉ hiện món đang bán)
 $products = $mysqli->query("SELECT * FROM products WHERE is_active = 1 ORDER BY category_id ASC");
+$next_order_id = 1; // Mặc định là 1 nếu chưa có đơn nào
+$query_max_id = "SELECT MAX(id) as max_id FROM orders";
+$result_max_id = $mysqli->query($query_max_id);
+
+if ($result_max_id && $row_max = $result_max_id->fetch_assoc()) {
+    $next_order_id = $row_max['max_id'] + 1;
+}
 ?>
+
 <?php
 // ... (Các phần session và kết nối DB giữ nguyên) ...
 
@@ -49,7 +59,7 @@ while ($row = $recipe_result->fetch_assoc()) {
     <title>POS Menu | Coffee Shop</title>
     <script>
     // Truyền dữ liệu từ PHP sang JS
-    const SERVER_INGREDIENTS = <?php echo json_encode($ingredients_data); ?>;
+    let SERVER_INGREDIENTS = <?php echo json_encode($ingredients_data); ?>;
     const SERVER_RECIPES = <?php echo json_encode($recipes_data); ?>;
 </script>
     
@@ -201,7 +211,7 @@ while ($row = $recipe_result->fetch_assoc()) {
                     </button>
                 </div>
                 <div class="text-center mt-2 small text-muted">
-                    Order ID Next: <span id="order-id">...</span>
+                    Order ID: <span class="text-warning">#<span id="order-id" class="text-warning"><?= $next_order_id ?></span></span>
                 </div>
             </div>
         </div>

@@ -267,6 +267,92 @@ document.getElementById('cart-list')?.addEventListener('focusout', function(even
    5. THANH TOÁN & BỘ LỌC (GIỮ NGUYÊN)
    ============================================================= */
 // ... (Giữ nguyên phần handleCheckout, Filter và Search từ code cũ của bạn) ...
+// function handleCheckout() {
+//     // 1. Kiểm tra giỏ hàng
+//     if (cartItems.length === 0) {
+//         alert("Giỏ hàng rỗng! Vui lòng chọn món trước khi thanh toán.");
+//         return;
+//     }
+
+//     // 2. Xác nhận thanh toán
+//     if (confirm("Xác nhận thanh toán và IN HÓA ĐƠN?")) {
+//         // Tính tổng tiền
+//         const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+//         // Chuẩn hóa dữ liệu gửi server
+//         const itemsToSend = cartItems.map(item => ({
+//             product_id: item.id,
+//             quantity: item.quantity
+//         }));
+
+//         const checkoutData = {
+//             total_amount: total,
+//             items: itemsToSend
+//         };
+
+//         // 3. Gửi Request
+//         fetch('../core/order_processor.php', {
+//             method: 'POST',
+//             headers: { 'Content-Type': 'application/json' },
+//             body: JSON.stringify(checkoutData)
+//         })
+//         .then(response => {
+//             if (!response.ok) throw new Error('Lỗi Server: ' + response.status);
+//             return response.json();
+//         })
+//         .then(data => {
+//             if (data.success === false) {
+//                 alert(`LỖI: ${data.message}`);
+//                 return;
+//             }
+
+//           // --- [ĐOẠN CODE MỚI BẮT ĐẦU TỪ ĐÂY] ---
+//     // Cập nhật biến kho gốc SERVER_INGREDIENTS để nó "nhớ" là đã mất hàng
+//     cartItems.forEach(item => {
+//         const recipe = SERVER_RECIPES[item.id];
+//         if (recipe) {
+//             recipe.forEach(ing => {
+//                 if (SERVER_INGREDIENTS[ing.id] !== undefined) {
+//                     // Trừ vĩnh viễn vào biến gốc
+//                     SERVER_INGREDIENTS[ing.id] -= (ing.qty * item.quantity);
+//                 }
+//             });
+//         }
+//     });
+//     // --- [KẾT THÚC ĐOẠN CODE MỚI] ---
+
+//     // --- BẮT ĐẦU QUY TRÌNH IN HÓA ĐƠN ---
+//     // ... (Code in hóa đơn giữ nguyên)
+
+//     setTimeout(() => {
+//         window.print();
+        
+//         // 3. Sau khi bảng in tắt đi -> Ẩn hóa đơn lại
+//         invoiceDiv.classList.add('d-none');
+
+//         // 4. Reset quy trình bán hàng
+//         alert(`Thanh toán thành công! Đơn hàng #${data.order_id}`);
+        
+//         cartItems = []; // Lúc này reset giỏ hàng thì kho đã được trừ ở trên rồi
+//         localStorage.removeItem(CART_STORAGE_KEY);
+        
+//         renderCart();
+//         updateTotalAmount();
+//         updateProductAvailability(); // Tính toán lại: (Kho mới đã trừ - 0) = Đúng thực tế
+        
+//         if (typeof order_id !== 'undefined') {
+//             order_id.textContent = Number(data.order_id) + 1;
+//         }
+//     }, 500);
+// })
+//         .catch(error => {
+//             console.error('LỖI AJAX:', error);
+//             alert('Đã xảy ra lỗi kết nối. Vui lòng kiểm tra lại.');
+//         });
+//     }
+// }
+
+
 function handleCheckout() {
     // 1. Kiểm tra giỏ hàng
     if (cartItems.length === 0) {
@@ -306,11 +392,28 @@ function handleCheckout() {
                 return;
             }
 
-            // ... (Đoạn code fetch server giữ nguyên) ...
+            // === [FIX LỖI Ở ĐÂY] ===
+            // Khai báo biến invoiceDiv ngay đầu để chắc chắn nó tồn tại
+            const invoiceDiv = document.getElementById('invoice-pos');
 
-            // --- BẮT ĐẦU QUY TRÌNH IN HÓA ĐƠN ---
-            
-            // A. Điền dữ liệu vào mẫu in HTML (Giữ nguyên)
+            // 1. CẬP NHẬT BIẾN KHO GỐC CLIENT (Để tránh hồi máu số lượng)
+            // Lưu ý: Nhớ đổi 'const' thành 'let' ở file menu.php thì dòng này mới chạy được
+            try {
+                cartItems.forEach(item => {
+                    const recipe = SERVER_RECIPES[item.id];
+                    if (recipe) {
+                        recipe.forEach(ing => {
+                            if (SERVER_INGREDIENTS[ing.id] !== undefined) {
+                                SERVER_INGREDIENTS[ing.id] -= (ing.qty * item.quantity);
+                            }
+                        });
+                    }
+                });
+            } catch (e) {
+                console.warn("Không thể cập nhật kho Client (Có thể do biến const):", e);
+            }
+
+            // 2. ĐIỀN DỮ LIỆU VÀO HÓA ĐƠN
             document.getElementById('print-order-id').textContent = data.order_id;
             document.getElementById('print-date').textContent = new Date().toLocaleString('vi-VN');
             document.getElementById('print-total').textContent = total.toLocaleString('vi-VN') + ' đ';
@@ -329,36 +432,37 @@ function handleCheckout() {
                 printBody.appendChild(tr);
             });
 
-            // B. XỬ LÝ HIỂN THỊ TRƯỚC KHI IN (FIX LỖI TRẮNG)
-            const invoiceDiv = document.getElementById('invoice-pos');
+            // 3. DỌN DẸP GIỎ HÀNG & UPDATE UI (Làm ngay lập tức)
+            cartItems = [];
+            localStorage.removeItem(CART_STORAGE_KEY);
+            renderCart();
+            updateTotalAmount();
+            updateProductAvailability(); // Tính lại theo kho mới đã trừ
             
-            // 1. Hiện hóa đơn lên (Gỡ class d-none)
-            invoiceDiv.classList.remove('d-none');
-            
-            // 2. Gọi lệnh in
-            setTimeout(() => {
-                window.print();
-                
-                // 3. Sau khi bảng in tắt đi -> Ẩn hóa đơn lại
-                invoiceDiv.classList.add('d-none');
+            if (typeof order_id !== 'undefined') {
+                order_id.textContent = Number(data.order_id) + 1;
+            }
 
-                // 4. Reset quy trình bán hàng
-                alert(`Thanh toán thành công! Đơn hàng #${data.order_id}`);
-                cartItems = [];
-                localStorage.removeItem(CART_STORAGE_KEY);
-                renderCart();
-                updateTotalAmount();
-                updateProductAvailability();
+            // 4. HIỆN THÔNG BÁO & IN
+            alert(`Thanh toán thành công! Đơn hàng #${data.order_id}`);
+
+            // Hiện khung in
+            if(invoiceDiv) {
+                invoiceDiv.classList.remove('d-none');
                 
-                if (typeof order_id !== 'undefined') {
-                    order_id.textContent = Number(data.order_id) + 1;
-                }
-            }, 500);
+                setTimeout(() => {
+                    window.print();
+                    // Ẩn lại sau khi bảng in hiện ra
+                    invoiceDiv.classList.add('d-none');
+                }, 500);
+            } else {
+                console.error("Lỗi: Không tìm thấy thẻ div hóa đơn (invoice-pos)");
+            }
 
         })
         .catch(error => {
             console.error('LỖI AJAX:', error);
-            alert('Đã xảy ra lỗi kết nối. Vui lòng kiểm tra lại.');
+            alert('Đã xảy ra lỗi kết nối. Vui lòng kiểm tra console.');
         });
     }
 }

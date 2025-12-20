@@ -75,18 +75,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="alert alert-danger"><?= $error ?></div>
         <?php endif; ?>
 
-        <form method="POST">
-            <div class="mb-3">
-                <label class="form-label">Tên đăng nhập</label>
-                <input type="text" name="username" class="form-control" required autofocus value="<?= isset($username) ? htmlspecialchars($username) : '' ?>">
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Mật khẩu</label>
-                <input type="password" name="password" class="form-control" required>
-            </div>
-            <button type="submit" class="btn btn-coffee w-100 py-2">Đăng Nhập</button>
-        </form>
+        <form action="login.php" method="POST" id="loginForm">
+    <div class="mb-3">
+        <label class="form-label">Tên đăng nhập</label>
+        <input type="text" name="username" class="form-control" required autofocus 
+               value="<?= isset($username) ? htmlspecialchars($username) : '' ?>">
     </div>
+    <div class="mb-3">
+        <label class="form-label">Mật khẩu</label>
+        <input type="password" name="password" class="form-control" required id="passwordField">
+    </div>
+    
+    <button type="submit" name="login_btn" id="loginBtn" class="btn btn-coffee w-100 py-2">Đăng Nhập</button>
+</form>
+
+<script>
+    // Lắng nghe sự kiện phím bấm trên ô Mật khẩu
+    document.getElementById('passwordField').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Ngăn hành vi Enter mặc định (để tránh xung đột)
+            
+            // Thay vì submit form, ta kích hoạt sự kiện CLICK lên nút
+            document.getElementById('loginBtn').click();
+        }
+    });
+</script>
 </body>
 </html>
 

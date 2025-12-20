@@ -30,6 +30,7 @@ $result = $mysqli->query($query);
     <title>Lịch sử đơn hàng cá nhân</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         body { background-color: #f4f1ea; }
         .table-container { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
@@ -77,7 +78,12 @@ $result = $mysqli->query($query);
                         <td class="fw-bold"><?= number_format($row['total_price']) ?>đ</td>
                         <td><span class="badge bg-success">Đã thanh toán</span></td>
                         <td>
-                            <button class="btn btn-outline-info btn-sm">Xem món</button>
+                            <td class="text-center">
+    <button class="btn btn-sm btn-outline-primary btn-view-detail" 
+            data-id="<?= $row['id'] ?>">
+        <i class="fa-solid fa-eye"></i> Xem món
+    </button>
+</td>
                         </td>
                     </tr>
                     <?php endwhile; ?>
@@ -88,5 +94,103 @@ $result = $mysqli->query($query);
         </table>
     </div>
 </div>
+<div class="modal fade" id="orderDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold">Chi tiết đơn hàng #<span id="modal-order-id"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <table class="table table-striped mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-3">Món</th>
+                            <th class="text-center">SL</th>
+                            <th class="text-end pe-3">Giá</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modal-items-body">
+                        </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="js/bootstrap.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const detailModal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
+    const modalBody = document.getElementById('modal-items-body');
+    const modalOrderId = document.getElementById('modal-order-id');
+
+    // Bắt sự kiện click vào các nút "Xem món"
+    document.querySelectorAll('.btn-view-detail').forEach(button => {
+        button.addEventListener('click', function() {
+            const orderId = this.getAttribute('data-id');
+            
+            // 1. Cập nhật tiêu đề modal
+            modalOrderId.textContent = orderId;
+            
+            // 2. Hiển thị loading trong lúc chờ
+            modalBody.innerHTML = '<tr><td colspan="3" class="text-center py-3"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải...</td></tr>';
+            detailModal.show();
+
+            // 3. Gọi AJAX lấy dữ liệu
+            fetch('get_order_details.php?id=' + orderId)
+                .then(response => response.json())
+                .then(data => {
+                    modalBody.innerHTML = ''; // Xóa loading
+
+                    if (data.length > 0) {
+                        let total = 0;
+                        data.forEach(item => {
+                            // Xử lý ảnh (nếu ko có ảnh thì dùng ảnh placeholder)
+                            let imgPath = item.image_url ? item.image_url : 'https://placehold.co/50';
+                            
+                            // Tính tổng dòng
+                            let lineTotal = item.quantity * item.price;
+                            total += lineTotal;
+
+                            let row = `
+                                <tr>
+                                    <td class="ps-3 align-middle">
+                                        <div class="d-flex align-items-center">
+                                            <img src="${imgPath}" class="rounded me-2" width="40" height="40" style="object-fit:cover;">
+                                            <span class="fw-bold text-dark">${item.name}</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-center align-middle fw-bold">${item.quantity}</td>
+                                    <td class="text-end pe-3 align-middle">
+                                        ${parseInt(item.price).toLocaleString('vi-VN')} đ
+                                    </td>
+                                </tr>
+                            `;
+                            modalBody.innerHTML += row;
+                        });
+                        
+                        // Thêm dòng tổng tiền vào cuối (tùy chọn)
+                        modalBody.innerHTML += `
+                            <tr class="table-primary border-top border-dark">
+                                <td colspan="2" class="text-end fw-bold pt-3">TỔNG CỘNG:</td>
+                                <td class="text-end fw-bold text-danger pe-3 pt-3 fs-5">${total.toLocaleString('vi-VN')} đ</td>
+                            </tr>
+                        `;
+
+                    } else {
+                        modalBody.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3">Không tìm thấy chi tiết món.</td></tr>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Lỗi:', error);
+                    modalBody.innerHTML = '<tr><td colspan="3" class="text-center text-danger py-3">Lỗi tải dữ liệu!</td></tr>';
+                });
+        });
+    });
+});
+</script>
 </body>
 </html>

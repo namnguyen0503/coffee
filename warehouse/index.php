@@ -9,7 +9,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'wh-staff' && $_SESSI
 }
 
 // 2. Lấy danh sách nguyên liệu
-$query = "SELECT * FROM ingredients ORDER BY quantity ASC"; // Sắp xếp cái nào ít lên đầu để dễ thấy
+$query = "SELECT * FROM ingredients ORDER BY quantity ASC"; 
 $result = $mysqli->query($query);
 ?>
 
@@ -25,8 +25,15 @@ $result = $mysqli->query($query);
         body { background-color: var(--wh-bg); font-family: 'Segoe UI', sans-serif; }
         .navbar-wh { background-color: var(--wh-primary); color: white; }
         .card-stock { border: none; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .low-stock { background-color: #ffebee; color: #c62828; font-weight: bold; }
         .unit-badge { background: #e0e0e0; color: #333; font-size: 0.8em; padding: 2px 6px; border-radius: 4px; }
+        
+        /* Trạng thái */
+        .status-out { color: #dc3545; font-weight: bold; } /* Đỏ */
+        .status-low { color: #ffc107; font-weight: bold; } /* Vàng */
+        .status-ok { color: #198754; font-weight: bold; }  /* Xanh lá */
+        
+        .row-out { background-color: #f8d7da; }
+        .row-low { background-color: #fff3cd; }
     </style>
 </head>
 <body>
@@ -44,7 +51,12 @@ $result = $mysqli->query($query);
 <div class="container py-4">
     <div class="row mb-4">
         <div class="col-md-12 d-flex justify-content-between align-items-center">
-            <h4 class="fw-bold text-dark mb-0">Tồn kho hiện tại</h4>
+            <div class="d-flex align-items-center">
+                <a href="../index.php" class="btn btn-outline-secondary me-3">
+                    <i class="fa-solid fa-arrow-left"></i> Quay lại
+                </a>
+                <h4 class="fw-bold text-dark mb-0">Tồn kho hiện tại</h4>
+            </div>
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#importModal">
                 <i class="fa-solid fa-plus me-2"></i>Nhập hàng mới
             </button>
@@ -66,22 +78,34 @@ $result = $mysqli->query($query);
                 <tbody>
                     <?php while($row = $result->fetch_assoc()): ?>
                         <?php 
-                            // Cảnh báo nếu dưới mức tối thiểu
-                            $is_low = $row['quantity'] <= $row['min_quantity'];
-                            $row_class = $is_low ? 'low-stock' : '';
+                            $qty = (float)$row['quantity'];
+                            $min = (float)$row['min_quantity'];
+                            
+                            // Logic phân loại trạng thái
+                            $status_text = "Ổn định";
+                            $status_class = "badge bg-success"; // Mặc định xanh
+                            $row_class = "";
+
+                            if ($qty <= 0) {
+                                $status_text = "Đã hết";
+                                $status_class = "badge bg-danger"; // Đỏ
+                                $row_class = "row-out";
+                            } elseif ($qty <= $min) {
+                                $status_text = "Sắp hết";
+                                $status_class = "badge bg-warning text-dark"; // Vàng (chữ đen cho dễ đọc)
+                                $row_class = "row-low";
+                            }
                         ?>
                         <tr class="<?= $row_class ?>">
                             <td class="ps-4 fw-bold"><?= $row['name'] ?></td>
-                            <td class="text-center fs-5">
-                                <?= number_format($row['quantity'], 1) ?>
+                            <td class="text-center fs-5 <?= ($qty <= 0) ? 'text-danger fw-bold' : '' ?>">
+                                <?= number_format($qty, 1) ?>
                             </td>
                             <td class="text-center"><span class="unit-badge"><?= $row['unit'] ?></span></td>
                             <td class="text-center">
-                                <?php if($is_low): ?>
-                                    <span class="badge bg-danger">Sắp hết</span>
-                                <?php else: ?>
-                                    <span class="badge bg-success">Ổn định</span>
-                                <?php endif; ?>
+                                <span class="<?= $status_class ?>">
+                                    <?= $status_text ?>
+                                </span>
                             </td>
                             <td class="text-end pe-4">
                                 <button class="btn btn-sm btn-outline-primary btn-quick-import" 
@@ -117,8 +141,9 @@ $result = $mysqli->query($query);
                             $result->data_seek(0);
                             while($ing = $result->fetch_assoc()): 
                             ?>
-                                <option value="<?= $ing['id'] ?>">
-                                    <?= $ing['name'] ?> (Hiện có: <?= $ing['quantity'] ?> <?= $ing['unit'] ?>)
+
+    <option value="<?= $ing['id'] ?>" data-unit="<?= $ing['unit'] ?>">                   
+                         <?= $ing['name'] ?> (Hiện có: <?= $ing['quantity'] ?> <?= $ing['unit'] ?>)
                                 </option>
                             <?php endwhile; ?>
                         </select>
@@ -151,21 +176,43 @@ $result = $mysqli->query($query);
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // JS nhỏ xử lý nút "Nhập" nhanh trên từng dòng
+document.addEventListener('DOMContentLoaded', function() {
+    const modalEl = document.getElementById('importModal');
+    const modal = new bootstrap.Modal(modalEl);
+    const select = document.getElementById('modal_ing_select');
+    const unitInput = document.getElementById('modal_unit_display');
+
+    // 1. Xử lý khi bấm nút "Nhập" trên bảng
     document.querySelectorAll('.btn-quick-import').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
-            const name = this.getAttribute('data-name');
+            const unit = this.getAttribute('data-unit'); // Lấy đơn vị từ nút bấm
+            
             // Mở modal
-            const modalEl = document.getElementById('importModal');
-            const modal = new bootstrap.Modal(modalEl);
             modal.show();
             
-            // Tự chọn đúng món trong select box
-            const select = document.getElementById('modal_ing_select');
+            // Điền dữ liệu vào Form
             select.value = id;
+            unitInput.value = unit; // Cập nhật ô đơn vị ngay lập tức
         });
     });
+
+    // 2. Xử lý khi thay đổi Select box thủ công (Trong Modal)
+    select.addEventListener('change', function() {
+        // Tìm option đang được chọn
+        const selectedOption = this.options[this.selectedIndex];
+        
+        // Lấy data-unit từ option đó
+        const unit = selectedOption.getAttribute('data-unit');
+        
+        // Cập nhật vào ô input
+        if (unit) {
+            unitInput.value = unit;
+        } else {
+            unitInput.value = '...';
+        }
+    });
+});
 </script>
 </body>
 </html>

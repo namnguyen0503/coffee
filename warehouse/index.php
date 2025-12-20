@@ -159,7 +159,15 @@ $result = $mysqli->query($query);
                              <input type="text" class="form-control" value="..." disabled id="modal_unit_display">
                         </div>
                     </div>
-
+                    <div class="mb-3 mt-3">
+    <label class="form-label">Tổng chi phí nhập (VNĐ):</label>
+    <div class="input-group">
+        <input type="number" name="import_cost" class="form-control fw-bold text-success" 
+               min="0" step="1000" placeholder="VD: 500000">
+        <span class="input-group-text">đ</span>
+    </div>
+    <div class="form-text text-muted small">Nhập tổng số tiền trả cho lô hàng này (để tính lãi lỗ).</div>
+</div>
                     <div class="mb-3 mt-3">
                         <label class="form-label">Ghi chú (Nguồn gốc/Lô hàng):</label>
                         <textarea name="note" class="form-control" rows="2" placeholder="VD: Nhập từ NCC Vinamilk..."></textarea>

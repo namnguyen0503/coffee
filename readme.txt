@@ -1,123 +1,114 @@
-SQL DATABASE STRUCTURE
-1. categories (Danh mục sản phẩm)
+Dưới đây là nội dung file **README.md** dành riêng cho cấu trúc Database của dự án Nguyễn Văn Coffee. Bản này được trình bày theo phong cách chuyên nghiệp, dễ đọc và thể hiện rõ các mối quan hệ logic.
 
-id: INT (Primary Key, Auto Increment)
-name: VARCHAR (Tên danh mục: Cà phê, Trà sữa, Đồ ăn vặt...)
+---
 
+# ☕ Database Structure - Nguyễn Văn Coffee
 
+Tài liệu này mô tả chi tiết sơ đồ cơ sở dữ liệu MySQL cho hệ thống quản lý cửa hàng Cafe, bao gồm các phân hệ: Bán hàng (POS), Quản lý kho (Warehouse), và Quản trị (Admin).
 
-2. products (Sản phẩm)
+## 📊 Sơ đồ Quan hệ Đơn vị (ER Diagram)
 
-id: INT (Primary Key, Auto Increment)
+Dựa trên cấu trúc bảng, hệ thống vận hành theo các luồng chính:
 
-name: VARCHAR (Tên món)
+* **Bán hàng:** `users` tạo `orders` -> `order_items` kết nối `products`.
+* **Định lượng:** `products` liên kết với `ingredients` thông qua bảng trung gian `recipes`.
+* **Kho vận:** `ingredients` được theo dõi biến động qua `inventory_log`.
 
-price: INT (Giá bán)
+---
 
-category_id: INT (Foreign Key trỏ đến categories.id)
+## 📂 Danh sách các bảng
 
-image_url: VARCHAR (Đường dẫn ảnh sản phẩm)
+### 1. `categories` (Danh mục sản phẩm)
 
-status: TINYINT (1: Còn hàng, 0: Hết hàng - Dùng để ẩn/hiện trên POS)
+Phân loại các mặt hàng trong thực đơn.
 
-is_active: BOOL (Trạng thái kích hoạt món) (0: Không bán, 1: còn bán)
+* `id`: **INT** (PK, AI)
+* `name`: **VARCHAR** - Tên danh mục (Cà phê, Trà sữa, Bánh ngọt...)
 
-3. orders (Hóa đơn tổng)
+### 2. `products` (Sản phẩm)
 
+Thông tin chi tiết về các món ăn/đồ uống.
 
+* `id`: **INT** (PK, AI)
+* `name`: **VARCHAR** - Tên món.
+* `price`: **INT** - Giá bán niêm yết.
+* `category_id`: **INT** (FK) - Liên kết với bảng `categories`.
+* `image_url`: **VARCHAR** - Đường dẫn ảnh sản phẩm.
+* `status`: **TINYINT** - Trạng thái kho (1: Còn hàng, 0: Hết hàng).
+* `is_active`: **BOOL** - Trạng thái kinh doanh (1: Đang bán, 0: Ngừng bán).
 
+### 3. `orders` (Hóa đơn tổng)
 
-id: INT (Primary Key, Auto Increment)
+Lưu trữ thông tin giao dịch tổng quát.
 
-order_date: DATETIME (Mặc định: CURRENT_TIMESTAMP)
+* `id`: **INT** (PK, AI)
+* `order_date`: **DATETIME** - Thời điểm tạo đơn (Mặc định: CURRENT_TIMESTAMP).
+* `total_price`: **INT** - Tổng giá trị đơn hàng.
+* `status`: **VARCHAR** - Trạng thái hóa đơn (`paid`, `not_paid`, `cancelled`).
+* `user_id`: **INT** (FK) - Nhân viên/Quản lý thực hiện thanh toán.
 
-total_price: INT (Tổng tiền hóa đơn)
+### 4. `order_items` (Chi tiết hóa đơn)
 
-status: VARCHAR (Trạng thái: paid, not_paid, cancelled)
+Lưu các món cụ thể trong mỗi hóa đơn.
 
-user_id: INT (Foreign Key trỏ đến users.id - Người bán đơn này)
+* `id`: **INT** (PK, AI)
+* `order_id`: **INT** (FK) - Thuộc hóa đơn nào.
+* `product_id`: **INT** (FK) - Món nào được mua.
+* `quantity`: **INT** - Số lượng khách mua.
 
-4. order_items (Chi tiết hóa đơn)
+### 5. `users` (Tài khoản hệ thống)
 
+Quản lý người dùng truy cập hệ thống.
 
+* `id`: **INT** (PK, AI)
+* `fullname`: **VARCHAR** - Tên đầy đủ.
+* `username`: **VARCHAR** (Unique) - Tên đăng nhập.
+* `password`: **VARCHAR** - Mật khẩu đã mã hóa (Hash).
+* `role`: **ENUM** (`admin`, `staff`, `wh-staff`) - Phân quyền người dùng.
+* `status`: **TINYINT** - Trạng thái tài khoản (1: Hoạt động, 0: Bị khóa).
 
+### 6. `ingredients` (Kho nguyên liệu)
 
-id: INT (Primary Key, Auto Increment)
+Quản lý vật tư đầu vào.
 
-order_id: INT (Foreign Key trỏ đến orders.id)
+* `id`: **INT** (PK, AI)
+* `name`: **VARCHAR** - Tên nguyên liệu (Hạt cafe, Sữa, Đường...).
+* `unit`: **VARCHAR** - Đơn vị tính (g, ml, quả, túi...).
+* `quantity`: **FLOAT** - Tồn kho thực tế.
+* `min_quantity`: **FLOAT** - Ngưỡng báo động để nhập hàng thêm.
 
-product_id: INT (Foreign Key trỏ đến products.id)
+### 7. `recipes` (Công thức món ăn)
 
-quantity: INT (Số lượng món khách mua)
+Cầu nối tính toán trừ kho tự động khi bán sản phẩm.
 
-5. users (Tài khoản hệ thống)
+* `id`: **INT** (PK, AI)
+* `product_id`: **INT** (FK) - Sản phẩm đầu ra.
+* `ingredient_id`: **INT** (FK) - Nguyên liệu đầu vào.
+* `quantity_required`: **FLOAT** - Định lượng tiêu hao cho **1 đơn vị** sản phẩm.
 
+### 8. `inventory_log` (Nhật ký kho)
 
+Lưu lịch sử mọi biến động nhập/xuất kho.
 
+* `id`: **INT** (PK, AI)
+* `ingredient_id`: **INT** (FK) - Nguyên liệu biến động.
+* `type`: **ENUM** (`import`, `export`) - Loại giao dịch.
+* `quantity`: **FLOAT** - Số lượng thay đổi.
+* `cost`: **DECIMAL** - Chi phí nhập hàng (Dùng để tính giá vốn/lợi nhuận).
+* `note`: **TEXT** - Lý do hoặc nguồn gốc hàng hóa.
+* `user_id`: **INT** (FK) - Người thực hiện thao tác kho.
+* `created_at`: **TIMESTAMP** - Thời gian thực hiện.
 
-id: INT (Primary Key, Auto Increment)
+---
 
-fullname: VARCHAR (Tên hiển thị)
+## 🔗 Các mối quan hệ chính
 
-username: VARCHAR (Tên đăng nhập, Unique)
+1. **Sản phẩm & Danh mục:** `products.category_id` → `categories.id` (Nhiều sản phẩm thuộc một danh mục).
+2. **Đơn hàng & Chi tiết:** `order_items.order_id` → `orders.id` (Một đơn hàng có nhiều món).
+3. **Bán hàng & Nhân viên:** `orders.user_id` → `users.id` (Biết ai là người bán đơn hàng đó).
+4. **Công thức (Recipe):** Liên kết `products` và `ingredients`. Dùng để tính toán số lượng món "Còn" thực tế dựa trên nguyên liệu ít nhất trong kho.
+5. **Lịch sử kho:** Kết nối `ingredients` và `users` để theo dõi trách nhiệm nhập/xuất hàng.
 
-password: VARCHAR (Mật khẩu đã mã hóa hash)
+---
 
-role: ENUM ('admin', 'staff') (Phân quyền người dùng)
-
-status: TINYINT (1: Hoạt động, 0: Bị khóa)
-
-6. ingredients (Kho nguyên liệu)
-
-
-
-
-id: INT (Primary Key, Auto Increment)
-
-name: VARCHAR (Tên nguyên liệu: Hạt cafe, Sữa, Đường...)
-
-unit: VARCHAR (Đơn vị tính: g, ml, lon...)
-
-quantity: FLOAT (Số lượng tồn kho hiện tại)
-
-min_quantity: FLOAT (Ngưỡng báo động khi sắp hết hàng)
-
-7. recipes (Công thức món ăn)
-
-
-
-
-id: INT (Primary Key, Auto Increment)
-
-product_id: INT (Foreign Key trỏ đến products.id)
-
-ingredient_id: INT (Foreign Key trỏ đến ingredients.id)
-
-quantity_required: FLOAT (Lượng nguyên liệu tiêu hao cho 1 sản phẩm)
-
-8. inventory_log (Nhật ký kho)
-
-
-
-
-id: INT (Primary Key, Auto Increment)
-
-ingredient_id: INT (Foreign Key trỏ đến ingredients.id)
-
-type: ENUM ('import', 'export') (Loại giao dịch: Nhập/Xuất)
-
-quantity: FLOAT (Số lượng thay đổi)
-
-note: TEXT (Ghi chú lý do nhập/xuất)
-
-created_at: TIMESTAMP (Thời gian thực hiện)
-
-Mối quan hệ chính (Relationships):
-
-products -> categories (N-1)
-
-order_items -> orders & products (N-1)
-
-recipes là bảng trung gian kết nối products và ingredients để trừ kho tự động.
-
-orders liên kết với users để biết ai là người thực hiện thanh toán.
+*Cập nhật lần cuối: 2025-12-20*

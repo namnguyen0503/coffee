@@ -1,0 +1,173 @@
+/* ============================================================ */
+/* 1. TÔNG MÀU CHỦ ĐẠO (Nâu Cà Phê - Vàng Kem) */
+/* ============================================================ */
+:root {
+  --coffee-dark: #2c1e19; /* Nâu đen (Espresso) */
+  --coffee-medium: #4e342e; /* Nâu vừa */
+  --coffee-light: #6d4c41; /* Nâu sáng */
+  --latte: #d7ccc8; /* Màu bạc sỉu */
+  --cream: #f9f5f0; /* Màu kem nền */
+  --gold: #d4a373; /* Màu vàng nâu (Caramel) */
+  --text-dark: #3e2723; /* Chữ nâu đậm */
+}
+
+/* ============================================================ */
+/* 2. THANH SIDEBAR BÊN TRÁI (MENU) */
+/* ============================================================ */
+.main-sidebar {
+  background: linear-gradient(
+    180deg,
+    var(--coffee-dark) 0%,
+    var(--coffee-medium) 100%
+  ) !important;
+  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Logo Brand */
+.brand-link {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background-color: var(--coffee-dark) !important;
+}
+
+/* Link Menu */
+.nav-sidebar .nav-item .nav-link {
+  color: #eaddcf !important; /* Màu chữ trắng kem */
+  transition: all 0.3s ease;
+}
+
+/* Hiệu ứng khi di chuột vào Menu */
+.nav-sidebar .nav-item .nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: var(--gold) !important;
+  padding-left: 15px; /* Hiệu ứng đẩy nhẹ chữ sang phải */
+}
+
+/* Menu đang được chọn (Active) */
+.nav-sidebar .nav-item .nav-link.active {
+  background-color: var(--gold) !important;
+  color: var(--coffee-dark) !important;
+  font-weight: bold;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Icon trong menu */
+.nav-sidebar .nav-icon {
+  color: #bcaaa4;
+}
+.nav-sidebar .nav-link.active .nav-icon {
+  color: var(--coffee-dark);
+}
+
+/* ============================================================ */
+/* 3. KHU VỰC HIỂN THỊ MÓN (MAIN CONTENT) */
+/* ============================================================ */
+.content-wrapper {
+  background-color: var(--cream) !important; /* Nền màu kem sáng */
+}
+
+/* Tiêu đề trang */
+.content-header h1 {
+  color: var(--text-dark);
+  font-family: "Georgia", serif; /* Font chữ có chân sang trọng */
+  font-weight: bold;
+  border-left: 5px solid var(--gold);
+  padding-left: 15px;
+}
+
+/* ============================================================ */
+/* 4. THẺ SẢN PHẨM (CARD MÓN ĂN) */
+/* ============================================================ */
+.card {
+  border: none !important;
+  border-radius: 15px !important; /* Bo tròn mềm mại */
+  background-color: #fff;
+  box-shadow: 0 5px 15px rgba(62, 39, 35, 0.08) !important; /* Bóng mờ nhẹ */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  overflow: hidden;
+}
+
+/* Hiệu ứng khi di chuột vào thẻ món */
+.card:hover {
+  transform: translateY(-5px); /* Nhấc nhẹ thẻ lên */
+  box-shadow: 0 10px 25px rgba(62, 39, 35, 0.15) !important;
+}
+
+/* Tên món */
+.card-title {
+  color: var(--text-dark);
+  font-weight: 700 !important;
+}
+
+/* Giá tiền */
+.card-text.text-danger {
+  color: #c62828 !important; /* Màu đỏ trầm hơn cho giá tiền */
+  font-size: 1.1rem;
+}
+
+/* Ảnh sản phẩm */
+.card-img-top {
+  border-bottom: 1px solid #f0f0f0;
+  transition: transform 0.5s ease;
+}
+.card:hover .card-img-top {
+  transform: scale(1.05); /* Phóng to ảnh nhẹ khi hover */
+}
+
+/* ============================================================ */
+/* 5. CÁC NÚT BẤM (BUTTONS) */
+/* ============================================================ */
+.btn-warning {
+  background-color: var(--gold) !important;
+  border-color: var(--gold) !important;
+  color: var(--coffee-dark) !important;
+  font-weight: 600;
+}
+.btn-warning:hover {
+  background-color: #c5905e !important;
+}
+
+.btn-danger {
+  background-color: #a1887f !important; /* Đổi màu đỏ gắt thành nâu đỏ nhạt */
+  border-color: #a1887f !important;
+}
+.btn-danger:hover {
+  background-color: #8d6e63 !important;
+}
+
+/* ============================================================ */
+/* 6. THANH TÌM KIẾM & BREADCRUMB */
+/* ============================================================ */
+.navbar-light {
+  background-color: #fff !important;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+/* Breadcrumb (Nút chuyển Đồ ăn/Đồ uống) */
+.breadcrumb-item a {
+  color: var(--coffee-light) !important;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 20px;
+  background: #efebe9;
+}
+.breadcrumb-item.active a {
+  background: var(--coffee-dark);
+  color: var(--gold) !important;
+}
+
+/* Ô tìm kiếm */
+.form-control-navbar {
+  background-color: #f1f1f1 !important;
+  border: none;
+}
+.text-coffee {
+  color: #4e342e;
+  font-family: "Georgia", serif;
+}
+.bg-latte {
+  background-color: #d7ccc8;
+}
+.card-body:hover {
+  background-color: #fdfaf6;
+  transition: 0.3s;
+}

@@ -171,3 +171,7 @@
   background-color: #fdfaf6;
   transition: 0.3s;
 }
+/* Hiệu ứng ẩn hiện mượt cho thanh điều hướng */
+.breadcrumb {
+  transition: opacity 0.3s ease;
+}

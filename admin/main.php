@@ -1,53 +1,66 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Quản lý Cửa Hàng Cafe</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <title>Admin Coffee | Quản trị</title>
   <link rel="stylesheet" href="assets/plugins/fontawesome-free/css/all.min.css">
   <link rel="stylesheet" href="assets/dist/css/adminlte.min.css">
-  <link rel="stylesheet" href="tinh-nang/display-item.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="hold-transition sidebar-mini">
 <div class="wrapper">
-  
+
   <nav class="main-header navbar navbar-expand navbar-white navbar-light">
-    <ul class="navbar-nav"><li class="nav-item"><a class="nav-link" data-widget="pushmenu" href="#"><i class="fas fa-bars"></i></a></li></ul>
-    <ul class="navbar-nav ml-auto">
-      <li class="nav-item">
-          <form class="form-inline" onsubmit="return false;">
-            <div class="input-group input-group-sm">
-              <input class="form-control form-control-navbar" id="searchInput" type="search" placeholder="Tìm món...">
-              <div class="input-group-append"><button class="btn btn-navbar" type="button" onclick="taiNoiDung()"><i class="fas fa-search"></i></button></div>
-            </div>
-          </form>
-      </li>
+    <ul class="navbar-nav">
+      <li class="nav-item"><a class="nav-link" data-widget="pushmenu" href="#"><i class="fas fa-bars"></i></a></li>
     </ul>
   </nav>
 
   <aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <a href="#" class="brand-link">
+      <span class="brand-text font-weight-light">Coffee Admin</span>
+    </a>
     <div class="sidebar">
-      <div class="user-panel mt-3 pb-3 mb-3 d-flex">
-        <div class="image"><img src="./assets/dist/img/logo coffee.png" class="img-fluid elevation-2" style="width: 50px;"></div>
-        <div class="info"><a href="#" class="d-block">Nguyễn Văn Coffee</a></div>
-      </div>
       <nav class="mt-2">
-        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
-          <li class="nav-item menu-open">
-            <a href="#" class="nav-link active"><i class="nav-icon fas fa-tachometer-alt"></i><p>Quản lý Menu</p></a>
-            <ul class="nav nav-treeview">
-              <li class="nav-item"><a href="#" class="nav-link active"><i class="far fa-circle nav-icon"></i><p>Danh sách món</p></a></li>
-              <li class="nav-item"><a href="../pos/index.php" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Order</p></a></li>
-              <li class="nav-item">
-              <a href="javascript:void(0)" class="nav-link" onclick="hienThiNhanVien()">
-              <i class="nav-icon fas fa-users-cog"></i>
-                  <p>Quản lý nhân viên</p>
-                </a>
-              </li>
-
-            </ul>
+        <ul class="nav nav-pills nav-sidebar flex-column" role="menu">
+          
+          <li class="nav-header">THỐNG KÊ</li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" onclick="loadView('report')">
+              <i class="nav-icon fas fa-chart-bar"></i> <p>Báo cáo doanh thu</p>
+            </a>
           </li>
+
+          <li class="nav-header">QUẢN LÝ CỬA HÀNG</li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" onclick="loadView('orders')">
+              <i class="nav-icon fas fa-receipt"></i> <p>Đơn hàng & Hủy</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" onclick="loadView('products')">
+              <i class="nav-icon fas fa-coffee"></i> <p>Món & Công thức</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" onclick="loadView('vouchers')">
+              <i class="nav-icon fas fa-ticket-alt"></i> <p>Mã giảm giá</p>
+            </a>
+          </li>
+
+          <li class="nav-header">NHÂN SỰ</li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" onclick="loadView('users')">
+              <i class="nav-icon fas fa-users"></i> <p>Nhân viên</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" onclick="loadView('shifts')">
+              <i class="nav-icon fas fa-calendar-alt"></i> <p>Xếp ca làm việc</p>
+            </a>
+          </li>
+
         </ul>
       </nav>
     </div>
@@ -56,269 +69,277 @@
   <div class="content-wrapper">
     <div class="content-header">
       <div class="container-fluid">
-        <div class="row mb-2">
-          <div class="col-sm-6"><h1 class="m-0" id="page-title">Danh sách món</h1></div>
-          <div class="col-sm-6">
-            <ol class="breadcrumb float-sm-right">
-              <li class="breadcrumb-item"><a href="javascript:void(0)" onclick="chuyenDanhMuc(2, 'Đồ ăn')"><i class="fas fa-hamburger"></i> Đồ ăn</a></li>
-              <li class="breadcrumb-item active"><a href="javascript:void(0)" onclick="chuyenDanhMuc(1, 'Đồ uống')"><i class="fas fa-coffee"></i> Đồ uống</a></li>
-            </ol>
-          </div>
-        </div>
-        <div id="hienthi-sanpham"></div>
+        <h1 class="m-0" id="page-title">Dashboard</h1>
       </div>
     </div>
+
+    <section class="content">
+      <div class="container-fluid" id="main-content">
+        <div class="alert alert-info">Chào mừng trở lại trang quản trị!</div>
+      </div>
+    </section>
   </div>
 
-  <aside class="control-sidebar control-sidebar-dark">
-    <div class="p-3"><a href="./add-food-drink.php">Thêm món mới</a><br><a href="./calculate-bill.php">Tính tiền</a></div>
-  </aside>
-
-  <footer class="main-footer"><strong>Coffee Nguyễn Văn</strong></footer>
-</div>
-
-<div class="modal fade" id="modalDelete">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header bg-danger"><h5 class="modal-title text-white">Xác nhận xóa</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div>
-      <div class="modal-body"><p>Bạn có chắc chắn muốn xóa món này không?</p><input type="hidden" id="idDelete"></div>
-      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button><button type="button" class="btn btn-danger" onclick="xacNhanXoa()">Xóa ngay</button></div>
-    </div>
-  </div>
-</div>
-
-<div class="modal fade" id="modalEdit">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header bg-warning"><h5 class="modal-title">Sửa thông tin món</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div>
-      <form id="formEdit" onsubmit="luuSua(event)">
-          <div class="modal-body">
-            <input type="hidden" name="edit_id" id="edit_id">
-            <div class="form-group"><label>Tên món</label><input type="text" class="form-control" name="edit_name" id="edit_name" required></div>
-            <div class="form-group"><label>Giá tiền</label><input type="number" class="form-control" name="edit_price" id="edit_price" required></div>
-            <div class="form-group"><label>Danh mục</label>
-                <select class="form-control" name="edit_category" id="edit_category">
-                    <option value="1">Đồ uống</option><option value="2">Đồ ăn</option>
-                </select>
-            </div>
-            <div class="form-group"><label>Ảnh món ăn</label><br>
-                <img id="preview_img" src="" style="width: 80px; height: 80px; object-fit: cover; margin-bottom: 5px; border: 1px solid #ddd;">
-                <input type="file" class="form-control-file" name="edit_image">
-            </div>
-          </div>
-          <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button><button type="submit" class="btn btn-primary">Lưu thay đổi</button></div>
-      </form>
-    </div>
-  </div>
+  <footer class="main-footer"><strong>Coffee POS System</strong></footer>
 </div>
 
 <script src="assets/plugins/jquery/jquery.min.js"></script>
 <script src="assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
-<script src="assets/dist/js/adminlte.js"></script>
+<script src="assets/dist/js/adminlte.min.js"></script>
 
 <script>
-    var currentCategory = 2; 
+// --- HÀM ĐIỀU HƯỚNG ---
+function loadView(viewName) {
+    let content = $('#main-content');
+    content.html('<div class="spinner-border"></div> Đang tải...');
 
-    $(document).ready(function(){
-        taiNoiDung();
-        $('#searchInput').on('keyup', function(){ taiNoiDung(); });
-    });
-
-    function chuyenDanhMuc(catId, title) {
-        currentCategory = catId;
-        $('#page-title').text('Danh sách ' + title);
-        $('#searchInput').val(''); 
-        taiNoiDung();
-    }
-
-    function taiNoiDung() {
-        var keyword = $('#searchInput').val();
-        $.ajax({
-            url: 'api/get_items.php', 
-            type: 'GET',
-            data: { category: currentCategory, search: keyword },
-            beforeSend: function() { $('#hienthi-sanpham').css('opacity', '0.5'); },
-            success: function(data) {
-                $('#hienthi-sanpham').css('opacity', '1');
-                $('#hienthi-sanpham').html(data);
-            }
+    if (viewName === 'report') {
+        $('#page-title').text('Báo Cáo Doanh Thu');
+        renderReportView();
+    } else if (viewName === 'orders') {
+        $('#page-title').text('Quản Lý Đơn Hàng');
+        renderOrdersView();
+    } else if (viewName === 'products') {
+        $('#page-title').text('Quản Lý Món & Công Thức');
+        renderProductView();
+    } else if (viewName === 'users') {
+        $('#page-title').text('Quản Lý Nhân Viên');
+        // Gọi lại hàm cũ hoặc viết mới tương tự
+        $.get('api/get_users.php', function(res){
+             // Render bảng user (dùng lại code bài trước)
+             content.html('Đã load user (Code bài trước)');
         });
     }
+}
 
-    // --- XỬ LÝ NÚT XÓA ---
-    $(document).on('click', '.btn-delete', function(e){
-        e.preventDefault();
-        var id = $(this).data('id');
-        $('#idDelete').val(id); 
-        $('#modalDelete').modal('show'); 
-    });
-
-    function xacNhanXoa() {
-        var id = $('#idDelete').val();
-        $.ajax({
-            url: 'api/delete_item.php', // Đảm bảo file này tồn tại trong admin/api/
-            type: 'POST',
-            dataType: 'json',
-            data: {id: id},
-            success: function(res) {
-                $('#modalDelete').modal('hide');
-                if(res.status == 'success') {
-                    taiNoiDung(); 
-                } else {
-                    alert('Lỗi: ' + res.message);
-                }
-            },
-            error: function(xhr) {
-                if(xhr.status == 404) alert("Lỗi: Không tìm thấy file api/delete_item.php");
-                else alert("Lỗi kết nối server");
-            }
-        });
-    }
-
-    // --- XỬ LÝ NÚT SỬA ---
-    $(document).on('click', '.btn-edit', function(e){
-        e.preventDefault();
-        var id = $(this).data('id');
-        var name = $(this).data('name');
-        var price = $(this).data('price').toString().replace(/\./g, '');
-        var cat = $(this).data('category');
-        var img = $(this).data('img');
-
-        $('#edit_id').val(id);
-        $('#edit_name').val(name);
-        $('#edit_price').val(price);
-        $('#edit_category').val(cat);
-        $('#preview_img').attr('src', img);
-        $('#modalEdit').modal('show');
-    });
-
-    function luuSua(e) {
-        e.preventDefault();
-        var formData = new FormData(document.getElementById('formEdit'));
-        $.ajax({
-            url: 'api/update_item.php', // Đảm bảo file này tồn tại trong admin/api/
-            type: 'POST',
-            data: formData,
-            contentType: false, processData: false, dataType: 'json',
-            success: function(res) {
-                if(res.status == 'success') {
-                    $('#modalEdit').modal('hide');
-                    alert('Cập nhật thành công!');
-                    taiNoiDung();
-                } else {
-                    alert('Lỗi: ' + res.message);
-                }
-            },
-            error: function(xhr) {
-                 if(xhr.status == 404) alert("Lỗi: Không tìm thấy file api/update_item.php");
-                 else alert("Lỗi kết nối server: " + xhr.responseText);
-            }
-        });
-    }
-</script>
-<div class="modal fade" id="modalAddUser">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header bg-primary"><h5 class="modal-title text-white">Thêm nhân viên mới</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div>
-      <form id="formAddUser" onsubmit="xuLyThemUser(event)">
-          <div class="modal-body">
-            <div class="form-group"><label>Họ và tên</label><input type="text" class="form-control" name="fullname" required></div>
-            <div class="form-group"><label>Tên đăng nhập</label><input type="text" class="form-control" name="username" required></div>
-            <div class="form-group"><label>Mật khẩu</label><input type="password" class="form-control" name="password" required></div>
-            <div class="form-group"><label>Chức vụ</label>
-                <select class="form-control" name="role">
-                    <option value="staff">Nhân viên phục vụ</option><option value="wh-staff">Thủ kho</option><option value="admin">Quản trị viên</option>
-                </select>
+// --- 1. GIAO DIỆN BÁO CÁO ---
+function renderReportView() {
+    let html = `
+        <div class="card">
+            <div class="card-header">
+                <div class="form-inline">
+                    <input type="date" id="rp_start" class="form-control mr-2" value="${new Date().toISOString().slice(0, 10)}">
+                    <input type="date" id="rp_end" class="form-control mr-2" value="${new Date().toISOString().slice(0, 10)}">
+                    <button class="btn btn-primary mr-2" onclick="fetchReport()"><i class="fas fa-filter"></i> Xem</button>
+                    <button class="btn btn-success" onclick="exportReport()"><i class="fas fa-file-excel"></i> Xuất Excel</button>
+                </div>
             </div>
-          </div>
-          <div class="modal-footer"><button type="submit" class="btn btn-primary">Lưu tài khoản</button></div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<div class="modal fade" id="modalEditUser">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header bg-warning"><h5 class="modal-title">Cấu hình tài khoản</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div>
-      <form id="formEditUser" onsubmit="xuLySuaUser(event)">
-          <div class="modal-body">
-            <input type="hidden" name="user_id" id="edit_user_id">
-            <div class="form-group"><label>Họ và tên</label><input type="text" class="form-control" name="fullname" id="edit_user_fullname" required></div>
-            <div class="form-group"><label>Mật khẩu mới (Để trống nếu không đổi)</label><input type="password" class="form-control" name="password"></div>
-            <div class="form-group"><label>Chức vụ</label>
-                <select class="form-control" name="role" id="edit_user_role">
-                    <option value="staff">Nhân viên phục vụ</option><option value="wh-staff">Thủ kho</option><option value="admin">Quản trị viên</option>
-                </select>
+            <div class="card-body">
+                <h3>Tổng doanh thu: <span id="total_rev" class="text-danger font-weight-bold">0 đ</span></h3>
+                <canvas id="revenueChart" style="height:300px; width:100%;"></canvas>
             </div>
-            <div class="form-group"><label>Trạng thái</label>
-                <select class="form-control" name="status" id="edit_user_status">
-                    <option value="1">Đang làm việc</option><option value="0">Khóa tài khoản</option>
-                </select>
-            </div>
-          </div>
-          <div class="modal-footer"><button type="submit" class="btn btn-warning">Lưu thay đổi</button></div>
-      </form>
-    </div>
-  </div>
-</div>
+        </div>
+    `;
+    $('#main-content').html(html);
+    fetchReport();
+}
 
-<script>
-// Hàm hiển thị giao diện quản lý nhân viên
-function hienThiNhanVien() {
-    $('#page-title').text('Quản lý nhân viên');
-    $('.breadcrumb-item').removeClass('active');
-    $.ajax({
-        url: 'api/get_users.php',
-        type: 'GET',
-        success: function(data) {
-            $('#hienthi-sanpham').html(data);
+function fetchReport() {
+    let s = $('#rp_start').val();
+    let e = $('#rp_end').val();
+    $.get(`api/report_stats.php?start=${s}&end=${e}`, function(res) {
+        if(res.success) {
+            $('#total_rev').text(new Intl.NumberFormat('vi-VN').format(res.total_revenue) + ' đ');
+            drawChart(res.data);
         }
     });
 }
 
-// Bắt sự kiện bấm nút Sửa nhân viên
-$(document).on('click', '.btn-edit-user', function(){
-    $('#edit_user_id').val($(this).data('id'));
-    $('#edit_user_fullname').val($(this).data('fullname'));
-    $('#edit_user_role').val($(this).data('role'));
-    $('#edit_user_status').val($(this).data('status'));
-    $('#modalEditUser').modal('show');
-});
+function exportReport() {
+    let s = $('#rp_start').val();
+    let e = $('#rp_end').val();
+    window.location.href = `api/report_stats.php?action=export&start=${s}&end=${e}`;
+}
 
-// Xử lý thêm
-function xuLyThemUser(e) {
-    e.preventDefault();
-    $.ajax({
-        url: 'api/add_user.php',
-        type: 'POST',
-        data: $('#formAddUser').serialize(),
-        success: function(res) {
-            if(res.status == 'success') {
-                alert(res.message);
-                $('#modalAddUser').modal('hide');
-                $('#formAddUser')[0].reset();
-                hienThiNhanVien();
-            } else { alert(res.message); }
+function drawChart(data) {
+    let labels = data.map(i => i.date);
+    let values = data.map(i => i.revenue);
+    
+    // Hủy biểu đồ cũ nếu có
+    if(window.myChart instanceof Chart) window.myChart.destroy();
+
+    var ctx = document.getElementById('revenueChart').getContext('2d');
+    window.myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Doanh thu (VNĐ)',
+                data: values,
+                backgroundColor: 'rgba(60,141,188,0.9)'
+            }]
         }
     });
 }
 
-// Xử lý sửa
-function xuLySuaUser(e) {
-    e.preventDefault();
-    $.ajax({
-        url: 'api/update_user.php',
-        type: 'POST',
-        data: $('#formEditUser').serialize(),
-        success: function(res) {
-            if(res.status == 'success') {
-                alert(res.message);
-                $('#modalEditUser').modal('hide');
-                hienThiNhanVien();
-            } else { alert(res.message); }
+// --- 2. GIAO DIỆN ĐƠN HÀNG (HỦY ĐƠN) ---
+// --- 2. GIAO DIỆN QUẢN LÝ ĐƠN HÀNG ---
+function renderOrdersView() {
+    $('#page-title').text('Quản Lý Đơn Hàng');
+    let content = $('#main-content');
+    
+    // 1. Tạo khung bảng
+    let html = `
+    <div class="card shadow">
+        <div class="card-header border-0">
+            <h3 class="card-title">Danh sách giao dịch</h3>
+            <div class="card-tools">
+                <button class="btn btn-tool" onclick="renderOrdersView()"><i class="fas fa-sync"></i> Tải lại</button>
+            </div>
+        </div>
+        <div class="card-body table-responsive p-0">
+            <table class="table table-striped table-valign-middle">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Thời gian</th>
+                        <th>Nhân viên</th>
+                        <th>Tổng tiền</th>
+                        <th>Trạng thái</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody id="order_list_body">
+                    <tr><td colspan="6" class="text-center">Đang tải dữ liệu...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>`;
+    
+    content.html(html);
+
+    // 2. Gọi API lấy dữ liệu và đổ vào bảng
+    $.get('api/get_orders.php', function(res) {
+        if (res.success) {
+            let rows = '';
+            res.data.forEach(order => {
+                // Format tiền tệ
+                let money = new Intl.NumberFormat('vi-VN').format(order.total_money);
+                
+                // Xử lý hiển thị trạng thái
+                let statusBadge = '';
+                let actionBtns = '';
+
+                if (order.status === 'completed') {
+                    statusBadge = '<span class="badge badge-success">Hoàn thành</span>';
+                    // CHỈ HIỆN NÚT HỦY KHI ĐƠN CÒN HOẠT ĐỘNG
+                    actionBtns = `
+                        <button onclick="cancelOrder(${order.id})" class="btn btn-sm btn-danger">
+                            <i class="fas fa-times-circle"></i> Hủy đơn
+                        </button>
+                    `;
+                } else if (order.status === 'cancelled') {
+                    statusBadge = '<span class="badge badge-secondary">Đã hủy</span>';
+                    actionBtns = '<span class="text-muted text-sm">Không thể thao tác</span>';
+                } else {
+                    statusBadge = '<span class="badge badge-warning">Chờ xử lý</span>';
+                    actionBtns = `
+                        <button onclick="cancelOrder(${order.id})" class="btn btn-sm btn-danger">Hủy</button>
+                    `;
+                }
+
+                rows += `
+                    <tr>
+                        <td>#${order.id}</td>
+                        <td>${order.order_date}</td>
+                        <td>${order.staff_name || 'Không rõ'}</td>
+                        <td class="font-weight-bold text-success">${money} đ</td>
+                        <td>${statusBadge}</td>
+                        <td>${actionBtns}</td>
+                    </tr>
+                `;
+            });
+            $('#order_list_body').html(rows);
+        } else {
+            $('#order_list_body').html('<tr><td colspan="6" class="text-center text-danger">Không tải được dữ liệu</td></tr>');
         }
     });
+}
+
+// Hàm xử lý logic Hủy (Giữ nguyên logic gọi API hoàn kho)
+function cancelOrder(orderId) {
+    if(!confirm('CẢNH BÁO QUAN TRỌNG:\n- Hành động này sẽ hoàn lại nguyên liệu vào kho.\n- Trừ doanh thu của ca làm việc hiện tại.\n\nBạn chắc chắn muốn hủy đơn #' + orderId + ' chứ?')) {
+        return;
+    }
+    
+    $.post('api/cancel_order.php', {order_id: orderId}, function(res) {
+        if(res.success) {
+            alert(res.message); // Thông báo thành công
+            renderOrdersView(); // Tải lại bảng để cập nhật trạng thái
+        } else {
+            alert('Lỗi: ' + res.message);
+        }
+    }, 'json').fail(function() {
+        alert('Lỗi kết nối server!');
+    });
+}
+
+// --- 3. GIAO DIỆN THÊM MÓN & CÔNG THỨC ---
+function renderProductView() {
+    // Modal HTML để thêm món + mapping nguyên liệu
+    let html = `
+    <button class="btn btn-primary mb-3" data-toggle="modal" data-target="#modalAddProduct">Thêm Món Mới</button>
+    <div class="modal fade" id="modalAddProduct">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Thêm Món & Công Thức</h5></div>
+                <div class="modal-body">
+                    <form id="formProduct">
+                        <div class="row">
+                            <div class="col-6"><input type="text" name="name" class="form-control" placeholder="Tên món" required></div>
+                            <div class="col-6"><input type="number" name="price" class="form-control" placeholder="Giá bán" required></div>
+                        </div>
+                        <div class="mt-2">
+                            <label>Nguyên liệu tiêu hao:</label>
+                            <div id="ingredient_rows"></div>
+                            <button type="button" class="btn btn-sm btn-info mt-1" onclick="addIngredientRow()">+ Thêm nguyên liệu</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" onclick="saveProduct()">Lưu Món</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    `;
+    $('#main-content').html(html);
+}
+
+function addIngredientRow() {
+    // Cần API lấy danh sách ingredient để bỏ vào select option
+    // Demo HTML
+    let row = `
+    <div class="d-flex mt-1 ing-row">
+        <select class="form-control mr-2 ing-select">
+            <option value="1">Cafe Hạt (Demo)</option>
+            <option value="2">Sữa Đặc (Demo)</option>
+        </select>
+        <input type="number" class="form-control mr-2 ing-qty" placeholder="Số lượng (g/ml)">
+        <button type="button" class="btn btn-danger btn-sm" onclick="$(this).parent().remove()">X</button>
+    </div>`;
+    $('#ingredient_rows').append(row);
+}
+
+function saveProduct() {
+    let ingredients = [];
+    $('.ing-row').each(function() {
+        let id = $(this).find('.ing-select').val();
+        let qty = $(this).find('.ing-qty').val();
+        if(id && qty) ingredients.push({id: id, qty: qty});
+    });
+
+    let data = {
+        name: $('input[name="name"]').val(),
+        price: $('input[name="price"]').val(),
+        category_id: 1, // Demo
+        ingredients: JSON.stringify(ingredients)
+    };
+
+    $.post('api/save_product.php', data, function(res) {
+        alert(res.message);
+        if(res.success) $('#modalAddProduct').modal('hide');
+    }, 'json');
 }
 </script>
 </body>

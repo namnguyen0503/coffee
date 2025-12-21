@@ -303,42 +303,312 @@ html {
 }
 
 /* =============================================================
-   IN HÓA ĐƠN (FIX LỖI TRANG TRẮNG & KHỔ GIẤY)
+   IN HÓA ĐƠN (GIAO DIỆN BILL NHIỆT CHUYÊN NGHIỆP)
    ============================================================= */
+
+/* Style cho các đường kẻ đứt nét */
+.dashed-line {
+    border-top: 1px dashed #000;
+    width: 100%;
+    height: 1px;
+    display: block;
+}
+
+/* Style hiển thị trên màn hình (để xem trước nếu cần) */
+#invoice-pos {
+    background: #fff;
+    width: 100%;
+    max-width: 350px; /* Giới hạn chiều rộng giống tờ bill thật */
+    margin: 0 auto;
+    color: #000;
+    font-family: 'Courier New', Courier, monospace; /* Font giống máy in */
+}
+
+/* --- CẤU HÌNH KHI IN --- */
 @media print {
-    /* 1. Thiết lập khổ giấy cho máy in (Quan trọng) */
-    @page {
-        size: 80mm auto; /* Ép khổ rộng 80mm, chiều dài tự động */
-        margin: 0mm; /* Bỏ lề mặc định của trình duyệt */
+    /* 1. Thiết lập khổ giấy 80mm */
+    @page { 
+        margin: 0; 
+        size: 80mm auto; 
     }
 
-    /* 2. Ẩn TOÀN BỘ giao diện web */
-    body {
-        visibility: hidden;
-        background-color: #fff; /* Đảm bảo nền trắng */
+    /* 2. Ẩn tất cả mọi thứ */
+    body { 
+        visibility: hidden; 
+        background: #fff;
+        height: auto;
     }
-
-    /* 3. Ẩn tất cả các con của body */
-    body * {
-        visibility: hidden;
-    }
-
-    /* 4. Chỉ hiển thị duy nhất cái Hóa đơn */
+    
+    /* 3. Hiển thị và định vị hóa đơn */
     #invoice-pos {
-        display: block !important; /* QUAN TRỌNG: Ghi đè style="display:none" trong HTML */
+        display: block !important;
         visibility: visible !important;
         position: absolute;
         left: 0;
         top: 0;
-        width: 100%; /* Full khổ giấy 80mm */
+        width: 79mm; /* Nhỏ hơn 80mm một chút để không bị tràn lề */
         margin: 0;
-        padding: 5px; /* Cách lề 1 xíu cho đẹp */
-        background-color: white;
-        z-index: 99999; /* Đè lên tất cả */
+        padding: 5mm 2mm; /* Padding nhỏ để tiết kiệm giấy */
+        font-size: 11px; /* Cỡ chữ chuẩn cho máy in nhiệt */
+        line-height: 1.2;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Hoặc dùng font monospace nếu thích */
     }
-    
-    /* Hiển thị nội dung bên trong hóa đơn */
+
+    /* Đảm bảo nội dung con hiển thị */
     #invoice-pos * {
         visibility: visible !important;
+    }
+
+    /* Tinh chỉnh các thành phần trong bill */
+    .store-name { font-size: 16px !important; }
+    .invoice-title { font-size: 14px !important; margin-top: 5px; margin-bottom: 5px; }
+    .total-amount { font-size: 18px !important; }
+    
+    /* Ẩn các nút không cần thiết */
+    .btn, .no-print, header, .sidebar, .filter-bar { 
+        display: none !important; 
+    }
+    
+    /* Canh chỉnh bảng */
+    .receipt-table th, .receipt-table td {
+        padding: 2px 0 !important; /* Thu gọn khoảng cách dòng */
+    }
+    
+    /* In đậm header bảng */
+    .receipt-table thead tr {
+        border-bottom: 1px dashed #000 !important;
+        border-top: 1px dashed #000 !important;
+    }
+}
+
+/* =============================================================
+   IN TEM DÁN CỐC (Sticker Style)
+   ============================================================= */
+@media print {
+    /* Cho phép hiện cả Hóa đơn VÀ Tem */
+    #sticker-container {
+        display: block !important;
+        visibility: visible !important;
+        position: absolute;
+        left: 0;
+        /* Tem sẽ bắt đầu in sau khi hóa đơn kết thúc (nhờ flow tự nhiên của HTML) */
+        top: 100%; 
+        width: 72mm; /* Khổ 80mm trừ lề */
+        padding: 0 2mm;
+    }
+
+    #sticker-container * {
+        visibility: visible !important;
+    }
+
+    /* Thiết kế 1 con tem */
+    .sticker-item {
+        border: 2px solid #000; /* Viền đậm giống Mixue */
+        border-radius: 5px;
+        padding: 10px;
+        margin-top: 15px; /* Cách tem trước ra */
+        margin-bottom: 20px;
+        page-break-inside: avoid; /* Không được cắt đôi con tem */
+        page-break-after: always; /* In xong 1 tem thì cắt giấy/sang trang */
+        font-family: 'Segoe UI', sans-serif;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .sticker-header {
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 1px solid #000;
+        padding-bottom: 5px;
+        margin-bottom: 5px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .sticker-product {
+        font-size: 24px; /* Tên món siêu to */
+        font-weight: 900;
+        line-height: 1.1;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+    }
+
+    .sticker-note {
+        font-size: 16px;
+        font-weight: bold;
+        background: #000;
+        color: #fff; /* Chữ trắng nền đen cho nổi bật ghi chú */
+        padding: 2px 5px;
+        display: inline-block;
+        border-radius: 3px;
+    }
+
+    .sticker-footer {
+        margin-top: 10px;
+        border-top: 1px dashed #000;
+        padding-top: 5px;
+        font-size: 11px;
+        text-align: center;
+    }
+}
+
+
+
+
+/* =============================================================
+   CẤU HÌNH IN ẤN (FIX LỖI FONT & TÁCH TRANG TUYỆT ĐỐI)
+   ============================================================= */
+
+/* 1. Reset khổ giấy chung */
+@page {
+    margin: 0;
+    size: auto; 
+}
+
+/* 2. Ẩn mặc định trên màn hình web */
+#invoice-pos, #sticker-container { display: none; }
+
+/* 3. Logic in ấn */
+@media print {
+    /* Ẩn TOÀN BỘ giao diện web (Menu, Sidebar...) */
+    body > *:not(#invoice-pos):not(#sticker-container) {
+        display: none !important;
+    }
+
+    body {
+        margin: 0; padding: 0; background: #fff; height: auto;
+        /* FIX LỖI FONT TIẾNG VIỆT: Dùng Arial là an toàn nhất */
+        font-family: 'Arial', sans-serif !important; 
+    }
+
+    /* === MODE 1: IN HÓA ĐƠN (BILL) === */
+    /* Khi Body có class 'print-mode-bill': Hiện Bill, Ẩn Sticker */
+    body.print-mode-bill #invoice-pos {
+        display: block !important;
+        position: absolute; left: 0; top: 0;
+        width: 72mm; /* Khổ 80mm */
+        z-index: 999;
+    }
+
+    /* QUAN TRỌNG: Ẩn Sticker tuyệt đối khi đang in Bill */
+    body.print-mode-bill #sticker-container {
+        display: none !important;
+    }
+
+    /* === MODE 2: IN TEM (STICKER) === */
+    /* Khi Body có class 'print-mode-sticker': Ẩn Bill, Hiện Sticker */
+    body.print-mode-sticker #sticker-container {
+        display: block !important;
+        position: absolute; left: 0; top: 0;
+        width: 50mm; /* Khổ Tem */
+        z-index: 999;
+    }
+
+    /* QUAN TRỌNG: Ẩn Bill tuyệt đối khi đang in Sticker */
+    body.print-mode-sticker #invoice-pos {
+        display: none !important;
+    }
+
+    /* --- STYLE CHI TIẾT --- */
+    
+    /* 1. Hóa đơn */
+    #invoice-pos * { font-family: 'Arial', sans-serif !important; }
+    .store-name { font-weight: 900; text-transform: uppercase; }
+    
+    /* Ép font toàn cục khi in */
+    * {
+        font-family: Arial, Helvetica, sans-serif !important;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+    }
+
+    /* Style riêng cho Sticker để không bị mảnh chữ */
+    .sticker-item {
+        border: 2px solid #000;
+        border-radius: 4px;
+        padding: 5px;
+        margin-bottom: 5px;
+        page-break-after: always;
+        page-break-inside: avoid;
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+        color: #000;
+    }
+
+    .sticker-product {
+        /* Dùng font-weight 700 thay vì 900 để tránh bị lem font tiếng Việt */
+        font-weight: 700 !important;
+        font-size: 18px; 
+        line-height: 1.2;
+        margin: 5px 0;
+        text-transform: uppercase;
+        text-align: center;
+        /* Khử răng cưa cho chữ to */
+        -webkit-transform: translateZ(0);
+    }
+
+    .sticker-note {
+        font-size: 13px;
+        font-weight: 700 !important;
+        /* THAY ĐỔI: Không dùng nền đen chữ trắng nữa vì nó là nguyên nhân gây mảnh chữ trên máy in nhiệt */
+        /* Thay bằng khung viền đen chữ đen cho an toàn */
+        border: 1px solid #000;
+        color: #000 !important;
+        background: #fff !important;
+        text-align: center;
+        padding: 4px;
+        border-radius: 2px;
+        margin-top: 5px;
+        text-transform: none;
+    }
+
+    .sticker-header, .sticker-footer {
+        font-family: Arial, sans-serif !important;
+        font-size: 10px;
+    }
+}
+
+@media print {
+    /* ... giữ các code cũ ... */
+
+    /* --- TÙY CHỈNH PHẦN TỔNG TIỀN (FOOTER HÓA ĐƠN) --- */
+    
+    /* 1. Khung chứa toàn bộ phần tổng tiền */
+    #print-total {
+        width: 100%;
+        margin-top: 5px;
+        border-top: 1px dashed #000; /* Đường kẻ ngăn cách với danh sách món */
+        padding-top: 5px;
+    }
+
+    /* 2. Một dòng thông tin (VD: Tổng tiền.... 100k) */
+    .bill-row {
+        display: flex;
+        justify-content: space-between; /* Đẩy chữ sang 2 mép trái phải */
+        align-items: center;
+        
+        /* === [CHỈNH KHOẢNG CÁCH GIỮA CÁC DÒNG Ở ĐÂY] === */
+        margin-bottom: 2px; /* Tăng giảm số này để các dòng xa/gần nhau */
+        /* ================================================= */
+        
+        font-size: 11px; /* Cỡ chữ mặc định */
+        width: 100%;
+    }
+
+    /* 3. Dòng Thành Tiền (To và Đậm hơn) */
+    .bill-row.final {
+        margin-top: 5px; /* Cách xa mấy dòng trên một chút cho thoáng */
+        font-size: 14px; /* Chữ to hơn */
+        font-weight: bold;
+        border-top: 1px solid #000; /* Thêm đường kẻ liền cho chốt hạ */
+        padding-top: 5px;
+    }
+
+    /* Nếu tên nhãn quá dài (VD: "Tổng tiền hàng hóa..."), 
+       nó sẽ tự co lại để ưu tiên hiển thị số tiền */
+    .bill-label {
+        white-space: nowrap; /* Không cho xuống dòng */
     }
 }

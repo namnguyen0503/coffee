@@ -5,14 +5,72 @@ const order_id = document.getElementById('order-id');
 const totalAmountElement = document.getElementById('total-amount'); 
 const CART_STORAGE_KEY = 'pos_current_order';
 let cartItems = [];
-
+let currentDiscountPercent = 0; // Biến lưu % giảm hiện tại
 // Khởi tạo khi trang tải xong
 document.addEventListener('DOMContentLoaded', () => {
     loadCartFromStorage();
     // Đợi 1 chút để DOM render xong rồi tính toán kho ban đầu
     setTimeout(updateProductAvailability, 100); 
+    checkShiftStatus();
 });
+function checkShiftStatus() {
+    fetch('../core/session_manager.php?action=check_status')
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            if (!data.is_open) {
+                // Nếu chưa vào ca -> Hiện modal bắt buộc
+                const modal = new bootstrap.Modal(document.getElementById('modalStartShift'));
+                modal.show();
+            } else {
+                console.log("Đang trong ca làm việc. Start time:", data.data.start_time);
+            }
+        }
+    })
+    .catch(err => console.error("Lỗi check shift:", err));
+}
 
+function startShift() {
+    const cash = document.getElementById('start-cash-input').value;
+    
+    fetch('../core/session_manager.php?action=start_shift', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ start_cash: cash })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            // Ẩn modal và reload để hệ thống chạy
+            location.reload(); 
+        } else {
+            alert(data.message);
+        }
+    });
+}
+
+function endShift() {
+    if (!confirm("Bạn chắc chắn muốn chốt ca và đăng xuất?")) return;
+
+    const cash = document.getElementById('end-cash-input').value;
+    const note = document.getElementById('end-note-input').value;
+
+    fetch('../core/session_manager.php?action=end_shift', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ end_cash: cash, note: note })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message); // Thông báo doanh thu
+            window.location.href = '../login.php'; // Đá về trang login
+        } else {
+            alert("Lỗi: " + data.message);
+        }
+    });
+}
 /* =============================================================
    2. QUẢN LÝ STORAGE & GIỎ HÀNG
    ============================================================= */
@@ -42,9 +100,34 @@ function saveCartToStorage() {
 }
 
 function updateTotalAmount() {
-    let total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    if (totalAmountElement) {
-        totalAmountElement.textContent = total.toLocaleString('vi-VN') + ' đ';
+    // Tính tổng tiền gốc (Ép kiểu Number để chắc chắn không bị lỗi chuỗi)
+    const totalOriginal = cartItems.reduce((sum, item) => sum + (Number(item.price) * Number(item.quantity)), 0);
+    
+    // Tính tiền giảm giá
+    const discountAmount = totalOriginal * (currentDiscountPercent / 100);
+    const totalFinal = totalOriginal - discountAmount;
+
+    // Cập nhật UI
+    // LƯU Ý: Phải dùng getElementById để chắc chắn trỏ đúng thẻ span hiển thị tiền
+    const totalElement = document.getElementById('total-amount'); 
+    
+    if (totalElement) {
+        if(currentDiscountPercent > 0) {
+            // Nếu có giảm giá: Hiện giá gốc gạch ngang + Giá sau giảm
+            totalElement.innerHTML = `
+                <div class="d-flex flex-column align-items-end">
+                    <small class="text-muted text-decoration-line-through" style="font-size: 0.8em;">
+                        ${totalOriginal.toLocaleString('vi-VN')} đ
+                    </small>
+                    <span class="text-danger fw-bold">
+                        ${totalFinal.toLocaleString('vi-VN')} đ
+                    </span>
+                </div>
+            `;
+        } else {
+            // Không giảm giá: Hiện bình thường
+            totalElement.textContent = totalFinal.toLocaleString('vi-VN') + ' đ';
+        }
     }
 }
 
@@ -140,7 +223,22 @@ function renderCart() {
     cartItems.forEach((item, index) => {
         const li = document.createElement('li');
         li.className = 'list-group-item d-flex justify-content-between align-items-center p-2';
+        // li.innerHTML = `
+        //     <div>
+        //         <span class="fw-bold">${item.name}</span> <br>
+        //         <small class="text-muted"><span class="item-total-price">${(item.quantity * item.price).toLocaleString('vi-VN')}</span> đ</small>
+        //     </div>
+        //     <div class="d-flex align-items-center">
+        //         <button class="btn btn-sm btn-outline-secondary me-1 btn-minus" data-index="${index}">-</button>
+        //         <input type="number" class="form-control form-control-sm text-center quantity-input fw-bold mx-1" 
+        //                value="${item.quantity}" data-index="${index}" style="width: 60px;">
+        //         <button class="btn btn-sm btn-outline-secondary ms-1 btn-plus" data-index="${index}">+</button>
+        //         <button class="btn btn-sm btn-danger ms-3 btn-remove" data-index="${index}"><i class="fa-solid fa-trash"></i></button>
+        //     </div>
+        // `;
         li.innerHTML = `
+    <div class="w-100">
+        <div class="d-flex justify-content-between align-items-start">
             <div>
                 <span class="fw-bold">${item.name}</span> <br>
                 <small class="text-muted"><span class="item-total-price">${(item.quantity * item.price).toLocaleString('vi-VN')}</span> đ</small>
@@ -148,11 +246,19 @@ function renderCart() {
             <div class="d-flex align-items-center">
                 <button class="btn btn-sm btn-outline-secondary me-1 btn-minus" data-index="${index}">-</button>
                 <input type="number" class="form-control form-control-sm text-center quantity-input fw-bold mx-1" 
-                       value="${item.quantity}" data-index="${index}" style="width: 60px;">
+                       value="${item.quantity}" data-index="${index}" style="width: 40px;">
                 <button class="btn btn-sm btn-outline-secondary ms-1 btn-plus" data-index="${index}">+</button>
-                <button class="btn btn-sm btn-danger ms-3 btn-remove" data-index="${index}"><i class="fa-solid fa-trash"></i></button>
+                <button class="btn btn-sm btn-danger ms-2 btn-remove" data-index="${index}"><i class="fa-solid fa-trash"></i></button>
             </div>
-        `;
+        </div>
+        <div class="mt-2">
+            <input type="text" class="form-control form-control-sm note-input text-primary fst-italic" 
+                   placeholder="Ghi chú (ít đá, mang về...)" 
+                   data-index="${index}" 
+                   value="${item.note || ''}"> 
+        </div>
+    </div>
+`;
         cartList.appendChild(li);
     });
 }
@@ -353,6 +459,120 @@ document.getElementById('cart-list')?.addEventListener('focusout', function(even
 // }
 
 
+// function handleCheckout() {
+//     // 1. Kiểm tra giỏ hàng
+//     if (cartItems.length === 0) {
+//         alert("Giỏ hàng rỗng! Vui lòng chọn món trước khi thanh toán.");
+//         return;
+//     }
+
+//     // 2. Xác nhận thanh toán
+//     if (confirm("Xác nhận thanh toán và IN HÓA ĐƠN?")) {
+//         // Tính tổng tiền
+//         const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+//         // Chuẩn hóa dữ liệu gửi server
+//         const itemsToSend = cartItems.map(item => ({
+//     product_id: item.id,
+//     quantity: item.quantity,
+//     note: item.note || '' // Gửi note lên server
+// }));
+
+//         const checkoutData = {
+//             total_amount: total,
+//             items: itemsToSend
+//         };
+
+//         // 3. Gửi Request
+//         fetch('../core/order_processor.php', {
+//             method: 'POST',
+//             headers: { 'Content-Type': 'application/json' },
+//             body: JSON.stringify(checkoutData)
+//         })
+//         .then(response => {
+//             if (!response.ok) throw new Error('Lỗi Server: ' + response.status);
+//             return response.json();
+//         })
+//         .then(data => {
+//             if (data.success === false) {
+//                 alert(`LỖI: ${data.message}`);
+//                 return;
+//             }
+
+//             // === [FIX LỖI Ở ĐÂY] ===
+//             // Khai báo biến invoiceDiv ngay đầu để chắc chắn nó tồn tại
+//             const invoiceDiv = document.getElementById('invoice-pos');
+
+//             // 1. CẬP NHẬT BIẾN KHO GỐC CLIENT (Để tránh hồi máu số lượng)
+//             // Lưu ý: Nhớ đổi 'const' thành 'let' ở file menu.php thì dòng này mới chạy được
+//             try {
+//                 cartItems.forEach(item => {
+//                     const recipe = SERVER_RECIPES[item.id];
+//                     if (recipe) {
+//                         recipe.forEach(ing => {
+//                             if (SERVER_INGREDIENTS[ing.id] !== undefined) {
+//                                 SERVER_INGREDIENTS[ing.id] -= (ing.qty * item.quantity);
+//                             }
+//                         });
+//                     }
+//                 });
+//             } catch (e) {
+//                 console.warn("Không thể cập nhật kho Client (Có thể do biến const):", e);
+//             }
+
+//             // 2. ĐIỀN DỮ LIỆU VÀO HÓA ĐƠN
+//             document.getElementById('print-order-id').textContent = data.order_id;
+//             document.getElementById('print-date').textContent = new Date().toLocaleString('vi-VN');
+//             document.getElementById('print-total').textContent = total.toLocaleString('vi-VN') + ' đ';
+            
+//             const printBody = document.getElementById('print-items-body');
+//             printBody.innerHTML = ''; 
+            
+//             cartItems.forEach(item => {
+//                 const tr = document.createElement('tr');
+//                 tr.innerHTML = `
+//                     <td class="text-start" style="width: 40%">${item.name}</td>
+//                     <td class="text-center" style="width: 15%">${item.quantity}</td>
+//                     <td class="text-end" style="width: 20%">${item.price.toLocaleString('vi-VN')}</td>
+//                     <td class="text-end fw-bold" style="width: 25%">${(item.price * item.quantity).toLocaleString('vi-VN')}</td>
+//                 `;
+//                 printBody.appendChild(tr);
+//             });
+
+//             // 3. DỌN DẸP GIỎ HÀNG & UPDATE UI (Làm ngay lập tức)
+//             cartItems = [];
+//             localStorage.removeItem(CART_STORAGE_KEY);
+//             renderCart();
+//             updateTotalAmount();
+//             updateProductAvailability(); // Tính lại theo kho mới đã trừ
+            
+//             if (typeof order_id !== 'undefined') {
+//                 order_id.textContent = Number(data.order_id) + 1;
+//             }
+
+//             // 4. HIỆN THÔNG BÁO & IN
+//             alert(`Thanh toán thành công! Đơn hàng #${data.order_id}`);
+
+//             // Hiện khung in
+//             if(invoiceDiv) {
+//                 invoiceDiv.classList.remove('d-none');
+                
+//                 setTimeout(() => {
+//                     window.print();
+//                     // Ẩn lại sau khi bảng in hiện ra
+//                     invoiceDiv.classList.add('d-none');
+//                 }, 500);
+//             } else {
+//                 console.error("Lỗi: Không tìm thấy thẻ div hóa đơn (invoice-pos)");
+//             }
+
+//         })
+//         .catch(error => {
+//             console.error('LỖI AJAX:', error);
+//             alert('Đã xảy ra lỗi kết nối. Vui lòng kiểm tra console.');
+//         });
+//     }
+// }
 function handleCheckout() {
     // 1. Kiểm tra giỏ hàng
     if (cartItems.length === 0) {
@@ -362,18 +582,23 @@ function handleCheckout() {
 
     // 2. Xác nhận thanh toán
     if (confirm("Xác nhận thanh toán và IN HÓA ĐƠN?")) {
-        // Tính tổng tiền
+        // Tính tổng tiền (Client side estimate)
         const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-        // Chuẩn hóa dữ liệu gửi server
+        // Lấy mã voucher hiện tại để gửi đi và hiển thị
+        const voucherCodeInput = document.getElementById('voucher-code').value.trim().toUpperCase();
+
         const itemsToSend = cartItems.map(item => ({
             product_id: item.id,
-            quantity: item.quantity
+            quantity: item.quantity,
+            note: item.note || '' 
         }));
 
         const checkoutData = {
-            total_amount: total,
-            items: itemsToSend
+            total_amount: total, 
+            items: itemsToSend,
+            voucher_code: voucherCodeInput, // Gửi mã
+            discount_percent: currentDiscountPercent // Gửi % (để admin verify)
         };
 
         // 3. Gửi Request
@@ -392,12 +617,7 @@ function handleCheckout() {
                 return;
             }
 
-            // === [FIX LỖI Ở ĐÂY] ===
-            // Khai báo biến invoiceDiv ngay đầu để chắc chắn nó tồn tại
-            const invoiceDiv = document.getElementById('invoice-pos');
-
-            // 1. CẬP NHẬT BIẾN KHO GỐC CLIENT (Để tránh hồi máu số lượng)
-            // Lưu ý: Nhớ đổi 'const' thành 'let' ở file menu.php thì dòng này mới chạy được
+            // === PHẦN 1: CẬP NHẬT KHO CLIENT ===
             try {
                 cartItems.forEach(item => {
                     const recipe = SERVER_RECIPES[item.id];
@@ -409,60 +629,122 @@ function handleCheckout() {
                         });
                     }
                 });
-            } catch (e) {
-                console.warn("Không thể cập nhật kho Client (Có thể do biến const):", e);
-            }
+            } catch (e) { console.warn("Lỗi update kho client:", e); }
 
-            // 2. ĐIỀN DỮ LIỆU VÀO HÓA ĐƠN
+            // === PHẦN 2: CHUẨN BỊ IN HÓA ĐƠN ===
+            const invoiceDiv = document.getElementById('invoice-pos');
+            const stickerContainer = document.getElementById('sticker-container');
+            const printDate = new Date();
+            const timeString = `${printDate.getHours()}:${String(printDate.getMinutes()).padStart(2, '0')}`;
+            const staffName = document.getElementById('print-staff')?.textContent || 'NV';
+
+            // A. Điền thông tin chung
             document.getElementById('print-order-id').textContent = data.order_id;
-            document.getElementById('print-date').textContent = new Date().toLocaleString('vi-VN');
-            document.getElementById('print-total').textContent = total.toLocaleString('vi-VN') + ' đ';
+            document.getElementById('print-date').textContent = printDate.toLocaleString('vi-VN');
             
+            // B. Điền danh sách món
             const printBody = document.getElementById('print-items-body');
             printBody.innerHTML = ''; 
             
             cartItems.forEach(item => {
+                const noteDisplay = item.note ? `<br><small class="fst-italic">(${item.note})</small>` : '';
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="text-start" style="width: 40%">${item.name}</td>
+                    <td class="text-start" style="width: 40%">${item.name} ${noteDisplay}</td>
                     <td class="text-center" style="width: 15%">${item.quantity}</td>
-                    <td class="text-end" style="width: 20%">${item.price.toLocaleString('vi-VN')}</td>
+                    <td class="text-end" style="width: 20%">${Number(item.price).toLocaleString('vi-VN')}</td>
                     <td class="text-end fw-bold" style="width: 25%">${(item.price * item.quantity).toLocaleString('vi-VN')}</td>
                 `;
                 printBody.appendChild(tr);
             });
+            // C. ĐIỀN TỔNG TIỀN & VOUCHER (GIAO DIỆN MỚI GỌN GÀNG)
+            const totalOriginal = Number(data.total_original); 
+            const finalAmount = Number(data.final_amount);     
+            const discountPercent = Number(data.discount_percent);
+            const discountAmount = totalOriginal - finalAmount;
 
-            // 3. DỌN DẸP GIỎ HÀNG & UPDATE UI (Làm ngay lập tức)
+            // Xây dựng các dòng HTML
+            let footerHtml = '';
+
+            // Dòng 1: Tổng tiền hàng (Luôn hiện)
+            footerHtml += `
+                <div class="bill-row">
+                    <span class="bill-label">Tổng tiền hàng:</span>
+                    <span>${totalOriginal.toLocaleString('vi-VN')}</span>
+                </div>
+            `;
+
+            // Dòng 2: Voucher/Giảm giá (Chỉ hiện nếu có giảm)
+            if (discountPercent > 0) {
+                const codeDisplay = voucherCodeInput ? `(${voucherCodeInput})` : '';
+                footerHtml += `
+                    <div class="bill-row fst-italic">
+                        <span class="bill-label">Giảm giá ${codeDisplay} -${discountPercent}%:</span>
+                        <span>-${discountAmount.toLocaleString('vi-VN')}</span>
+                    </div>
+                `;
+            }
+
+            // Dòng 3: Thành tiền (Chốt hạ)
+            footerHtml += `
+                <div class="bill-row final">
+                    <span class="bill-label">THANH TOÁN:</span>
+                    <span>${finalAmount.toLocaleString('vi-VN')} đ</span>
+                </div>
+            `;
+
+            // Render vào thẻ div
+            document.getElementById('print-total').innerHTML = footerHtml;
+            
+
+            // D. Tạo Tem Sticker (Giữ nguyên)
+            if (stickerContainer) {
+                stickerContainer.innerHTML = '';
+                cartItems.forEach(item => {
+                    for (let i = 1; i <= item.quantity; i++) {
+                        const noteHtml = item.note ? `<div class="sticker-note">${item.note}</div>` : '';
+                        const stickerHtml = `
+                            <div class="sticker-item">
+                                <div class="sticker-header">
+                                    <span>#${data.order_id}</span> <span>${timeString}</span> <span>${i}/${item.quantity}</span>
+                                </div>
+                                <div class="sticker-product">${item.name}</div>
+                                ${noteHtml}
+                                <div class="sticker-footer">NV: ${staffName}</div>
+                            </div>
+                        `;
+                        stickerContainer.insertAdjacentHTML('beforeend', stickerHtml);
+                    }
+                });
+            }
+
+            // === PHẦN 3: DỌN DẸP ===
             cartItems = [];
             localStorage.removeItem(CART_STORAGE_KEY);
+            // Reset input voucher
+            document.getElementById('voucher-code').value = '';
+            document.getElementById('discount-display').textContent = '0%';
+            currentDiscountPercent = 0;
+
             renderCart();
             updateTotalAmount();
-            updateProductAvailability(); // Tính lại theo kho mới đã trừ
+            updateProductAvailability();
             
-            if (typeof order_id !== 'undefined') {
-                order_id.textContent = Number(data.order_id) + 1;
-            }
+            if (typeof order_id !== 'undefined') order_id.textContent = Number(data.order_id) + 1;
 
-            // 4. HIỆN THÔNG BÁO & IN
+            // === PHẦN 4: IN ẤN ===
             alert(`Thanh toán thành công! Đơn hàng #${data.order_id}`);
-
-            // Hiện khung in
-            if(invoiceDiv) {
-                invoiceDiv.classList.remove('d-none');
-                
-                setTimeout(() => {
-                    window.print();
-                    // Ẩn lại sau khi bảng in hiện ra
-                    invoiceDiv.classList.add('d-none');
-                }, 500);
-            } else {
-                console.error("Lỗi: Không tìm thấy thẻ div hóa đơn (invoice-pos)");
-            }
-
+            
+            if(invoiceDiv) invoiceDiv.classList.remove('d-none');
+            if(stickerContainer) stickerContainer.classList.remove('d-none');
+            
+            setTimeout(() => {
+                performDualPrinting();
+            }, 500);
         })
         .catch(error => {
             console.error('LỖI AJAX:', error);
-            alert('Đã xảy ra lỗi kết nối. Vui lòng kiểm tra console.');
+            alert('Đã xảy ra lỗi kết nối: ' + error.message);
         });
     }
 }
@@ -562,6 +844,111 @@ if (searchInput) {
     });
 }
 
+// Lưu ghi chú khi gõ
+document.getElementById('cart-list')?.addEventListener('input', function(event) {
+    if (event.target.classList.contains('note-input')) {
+        const index = parseInt(event.target.dataset.index);
+        cartItems[index].note = event.target.value; // Lưu vào mảng
+        saveCartToStorage(); // Lưu vào LocalStorage
+    }
+});
 
 
 
+// Hàm xử lý in tách đôi: In Bill -> Đợi -> In Sticker
+function performDualPrinting() {
+    const body = document.body;
+    
+    // --- LẦN 1: CHUẨN BỊ IN BILL ---
+    // 1. Reset class cũ (phòng hờ)
+    body.classList.remove('print-mode-sticker');
+    
+    // 2. Thêm class in Bill
+    body.classList.add('print-mode-bill');
+    
+    // 3. Gọi lệnh in
+    window.print();
+    
+    // 4. Xóa class in Bill ngay sau khi dialog in tắt (hoặc lệnh gửi đi)
+    // Để trả lại trạng thái trắng cho lần in sau
+    body.classList.remove('print-mode-bill');
+
+    // --- LẦN 2: CHUẨN BỊ IN STICKER ---
+    const hasStickers = document.querySelectorAll('.sticker-item').length > 0;
+
+    if (hasStickers) {
+        // Đợi 500ms - 1s để máy in nuốt lệnh 1, tránh bị nghẽn lệnh
+        setTimeout(() => {
+            if (confirm("In TEM DÁN CỐC (Sticker) ngay bây giờ?")) {
+                // 1. Thêm class in Sticker
+                body.classList.add('print-mode-sticker');
+                
+                // 2. Gọi lệnh in
+                window.print();
+                
+                // 3. Xóa class in Sticker
+                body.classList.remove('print-mode-sticker');
+            }
+            
+            // Xong xuôi thì ẩn hết đi
+            document.getElementById('invoice-pos').classList.add('d-none');
+            document.getElementById('sticker-container').classList.add('d-none');
+            
+        }, 500);
+    } else {
+        // Nếu không có tem thì ẩn luôn invoice
+        document.getElementById('invoice-pos').classList.add('d-none');
+    }
+}
+
+function checkVoucher() {
+    const codeInput = document.getElementById('voucher-code');
+    const code = codeInput.value.trim().toUpperCase();
+    const discountDisplay = document.getElementById('discount-display');
+
+    if (!code) {
+        currentDiscountPercent = 0;
+        discountDisplay.textContent = "0%";
+        updateTotalAmount();
+        return;
+    }
+
+    // 1. LOGIC ADMIN (Voucher vĩnh viễn)
+    if (code === 'ADMINVIP') {
+        let percent = prompt("🔔 ADMIN DETECTED!\nNhập phần trăm muốn giảm giá (0-100):");
+        
+        if (percent !== null && percent.trim() !== "") {
+            percent = parseFloat(percent);
+            if (!isNaN(percent) && percent >= 0 && percent <= 100) {
+                currentDiscountPercent = percent;
+                alert(`Đã áp dụng giảm giá ADMIN: ${percent}%`);
+            } else {
+                alert("Số phần trăm không hợp lệ!");
+                currentDiscountPercent = 0;
+                codeInput.value = "";
+            }
+        } else {
+            // Nếu bấm Cancel
+            currentDiscountPercent = 0;
+            codeInput.value = "";
+        }
+    } 
+    // 2. LOGIC VOUCHER KHÁCH (Dùng 1 lần - Client chỉ hiển thị giả định, Server sẽ check lại)
+    else if (code === 'WELCOME') {
+        currentDiscountPercent = 10;
+        alert("Áp dụng mã WELCOME: Giảm 10%");
+    }
+    else if (code === 'FREESHIP') {
+        currentDiscountPercent = 5;
+        alert("Áp dụng mã FREESHIP: Giảm 5%");
+    }
+    else {
+        alert("Mã giảm giá không hợp lệ!");
+        currentDiscountPercent = 0;
+        codeInput.value = "";
+    }
+
+    // Cập nhật giao diện
+    discountDisplay.textContent = `-${currentDiscountPercent}%`;
+    updateTotalAmount(); // Tính lại tổng tiền hiển thị
+}

@@ -1,37 +1,21 @@
 <?php
+require '../tinh-nang/db_connection.php';$conn = connect_db();
 header('Content-Type: application/json');
-require_once '../tinh-nang/db_connection.php';
 
-$conn = connect_db();
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $fullname = $_POST['fullname'];
+    $username = $_POST['username'];
+    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+    $role = $_POST['role'];
 
-$fullname = $_POST['fullname'] ?? '';
-$username = $_POST['username'] ?? '';
-$password = $_POST['password'] ?? '';
-$role     = $_POST['role'] ?? 'Staff';
+    $sql = "INSERT INTO users (fullname, username, password, role, status) VALUES (?, ?, ?, ?, 1)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ssss", $fullname, $username, $password, $role);
 
-if (!$fullname || !$username || !$password) {
-    echo json_encode(['success' => false, 'message' => 'Thiếu thông tin!']);
-    exit;
+    if ($stmt->execute()) {
+        echo json_encode(['status' => 'success', 'message' => 'Thêm nhân viên thành công!']);
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'Lỗi: Tên đăng nhập có thể đã tồn tại.']);
+    }
 }
-
-// Check trùng user
-$check = $conn->prepare("SELECT id FROM users WHERE username = ?");
-$check->bind_param("s", $username);
-$check->execute();
-if ($check->get_result()->num_rows > 0) {
-    echo json_encode(['success' => false, 'message' => 'Tên đăng nhập đã tồn tại!']);
-    exit;
-}
-
-// Mã hóa và thêm
-$hashed = password_hash($password, PASSWORD_DEFAULT);
-$stmt = $conn->prepare("INSERT INTO users (fullname, username, password, role) VALUES (?, ?, ?, ?)");
-$stmt->bind_param("ssss", $fullname, $username, $hashed, $role);
-
-if ($stmt->execute()) {
-    echo json_encode(['success' => true, 'message' => 'Thêm thành công!']);
-} else {
-    echo json_encode(['success' => false, 'message' => 'Lỗi: ' . $conn->error]);
-}
-disconnect_db($conn);
 ?>

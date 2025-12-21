@@ -1,6 +1,5 @@
 <?php
-require '../tinh-nang/db_connection.php';
-$conn = connect_db();
+require '../tinh-nang/db_connection.php';$conn = connect_db();$conn = connect_db();
 
 header('Content-Type: application/json'); // Thêm dòng này
 

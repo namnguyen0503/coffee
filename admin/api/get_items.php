@@ -1,7 +1,6 @@
 <?php
 // 1. Kết nối CSDL
-require '../tinh-nang/db_connection.php'; 
-$conn = connect_db();
+require '../tinh-nang/db_connection.php';$conn = connect_db();$conn = connect_db();
 
 // 2. Lấy tham số từ AJAX
 $category_id = isset($_GET['category']) ? (int)$_GET['category'] : 0; 

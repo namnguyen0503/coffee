@@ -110,18 +110,26 @@ $low_stock_result = $mysqli->query($low_stock_query);
                                 </thead>
                                 <tbody>
                                     <?php
-                                    $recent_orders = $mysqli->query("SELECT id, order_date, total_price, status 
-                                                                    FROM orders WHERE user_id = $user_id 
-                                                                    ORDER BY order_date DESC LIMIT 5");
-                                    while($row = $recent_orders->fetch_assoc()):
-                                    ?>
-                                    <tr>
-                                        <td>#<?= $row['id'] ?></td>
-                                        <td><?= date('H:i', strtotime($row['order_date'])) ?></td>
-                                        <td class="fw-bold"><?= number_format($row['total_price']) ?>đ</td>
-                                        <td><span class="badge bg-light text-success border border-success">Đã trả</span></td>
-                                    </tr>
-                                    <?php endwhile; ?>
+$recent_orders = $mysqli->query("SELECT id, order_date, total_price, status 
+                                FROM orders WHERE user_id = $user_id 
+                                ORDER BY order_date DESC LIMIT 5");
+while($row = $recent_orders->fetch_assoc()):
+?>
+<tr>
+    <td>#<?= $row['id'] ?></td>
+    <td><?= date('H:i', strtotime($row['order_date'])) ?></td>
+    <td class="fw-bold"><?= number_format($row['total_price']) ?>đ</td>
+    <td>
+        <?php if ($row['status'] == 'paid'): ?>
+<span class="badge bg-success">Đã trả</span>
+        <?php elseif ($row['status'] == 'canceled'): ?>
+<span class="badge bg-secondary">Đã hủy</span>
+        <?php else: ?>
+<span class="badge bg-warning text-dark">Đang xử lý</span>
+        <?php endif; ?>
+    </td>
+</tr>
+<?php endwhile; ?>
                                 </tbody>
                             </table>
                         </div>

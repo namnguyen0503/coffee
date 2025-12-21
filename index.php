@@ -58,9 +58,85 @@ if ($role === 'wh-staff') $role_label = 'Thủ kho';
             <h2 class="mb-0">Xin chào, <?= htmlspecialchars($fullname) ?>!</h2>
             <small>Chức vụ: <strong><?= $role_label ?></strong></small>
         </div>
-        <a href="logout.php" class="btn btn-outline-light btn-sm">
-            <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
-        </a>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<div class="modal fade" id="modalEndShiftRoot" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fa-solid fa-door-closed"></i> KẾT THÚC CA & ĐĂNG XUẤT</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-dark">
+                <div class="alert alert-warning">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Hệ thống phát hiện bạn đang trong ca làm việc. Vui lòng chốt tiền để đăng xuất.
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Tổng tiền mặt thực tế trong két:</label>
+                    <input type="number" id="root-end-cash-input" class="form-control form-control-lg" placeholder="Nhập số tiền...">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Ghi chú (nếu lệch tiền):</label>
+                    <textarea id="root-end-note-input" class="form-control" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" onclick="endShiftRoot()">Chốt ca & Đăng xuất</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+
+    function endShiftRoot() {
+        const cashInput = document.getElementById('root-end-cash-input');
+        const noteInput = document.getElementById('root-end-note-input');
+
+        // Validate nhập tiền
+        if (!cashInput || cashInput.value.trim() === "") {
+            alert("Vui lòng nhập số tiền mặt thực tế trong két!");
+            cashInput?.focus();
+            return;
+        }
+
+        if (!confirm("Xác nhận chốt ca và đăng xuất khỏi hệ thống?")) return;
+
+        const cash = cashInput.value;
+        const note = noteInput ? noteInput.value : '';
+
+        // Gọi API chốt ca (Lưu ý đường dẫn: đang ở root nên vào folder core/)
+        fetch('core/session_manager.php?action=end_shift', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ end_cash: cash, note: note })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message); // Thông báo doanh thu
+                window.location.href = 'login.php'; // Đá về trang login
+            } else {
+                alert("Lỗi Server: " + data.message);
+            }
+        })
+        .catch(err => {
+            console.error("Lỗi kết nối:", err);
+            alert("Không thể kết nối đến Server. Vui lòng kiểm tra mạng.");
+        });
+    }
+</script>
+
+</body> 
+
+
+
+
+<button class="btn btn-outline-danger btn-sm ms-2" type="button" data-bs-toggle="modal" data-bs-target="#modalEndShiftRoot">
+    <i class="fa-solid fa-right-from-bracket"></i> Thoát ca
+</button>
     </div>
 
     <div class="row justify-content-center g-4">

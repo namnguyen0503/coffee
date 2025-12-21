@@ -128,7 +128,11 @@ while ($row = $recipe_result->fetch_assoc()) {
         <div class="user-info">
             <span class="text-muted small">Thu ngân:</span> 
             <strong><?= htmlspecialchars($_SESSION['fullname']) ?></strong>
+            <button class="btn btn-outline-danger btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#modalEndShift">
+    <i class="fa-solid fa-right-from-bracket"></i> Thoát ca
+</button>
         </div>
+        
     </header>
 
     <div class="pos-container">
@@ -197,12 +201,23 @@ while ($row = $recipe_result->fetch_assoc()) {
                 </ul>
 
             <div class="cart-footer">
+                <div class="input-group mb-3">
+    <span class="input-group-text"><i class="fa-solid fa-ticket"></i></span>
+    <input type="text" id="voucher-code" class="form-control" placeholder="Mã giảm giá (Nếu có)">
+    <button class="btn btn-outline-secondary" type="button" onclick="checkVoucher()">Áp dụng</button>
+</div>
+
+<div class="d-flex justify-content-between mb-2">
+    <span>Giảm giá:</span>
+    <span class="text-danger fw-bold" id="discount-display">0%</span>
+</div>
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <span class="text-muted fw-bold">Tổng tiền:</span>
                     <span id="total-amount" class="fs-3 fw-bold text-danger">0 đ</span>
                 </div>
                 
                 <div class="d-grid gap-2">
+                    
                     <button id="checkout-btn" class="btn btn-success btn-lg fw-bold">
                         <i class="fa-regular fa-credit-card me-2"></i> THANH TOÁN
                     </button>
@@ -218,41 +233,110 @@ while ($row = $recipe_result->fetch_assoc()) {
 
     </div>
 
-    <div id="invoice-pos" class="d-none">
-    <div class="invoice-header">
-        <h2 class="store-name">Nguyễn Văn Coffee</h2>
-        <p class="store-info">ĐC: 36 Văn Cao, Hải Phòng</p>
-        <p class="store-info">SĐT: 090.123.4567</p>
-        <hr>
-        <h3 class="invoice-title">HÓA ĐƠN THANH TOÁN</h3>
-        <p class="meta-info">Số phiếu: #<span id="print-order-id">000</span></p>
-        <p class="meta-info">Thời gian: <span id="print-date">--/--/----</span></p>
-        <p class="meta-info">Thu ngân: <span id="print-staff"><?= $_SESSION['fullname'] ?></span></p>
-    </div>
-    
-    <table class="invoice-table">
-        <thead>
-            <tr>
-                <th class="text-start">Món</th>
-                <th class="text-center">SL</th>
-                <th class="text-end">Đơn giá</th>
-                <th class="text-end">T.Tiền</th>
-            </tr>
-        </thead>
-        <tbody id="print-items-body">
-            </tbody>
-    </table>
-    
-    <hr>
-    
-    <div class="invoice-footer">
-        <div class="total-row">
-            <span>TỔNG CỘNG:</span>
-            <span class="total-amount" id="print-total">0 đ</span>
+<div id="invoice-pos" class="d-none">
+    <div class="invoice-content">
+        <div class="invoice-header text-center mb-2">
+            <h4 class="store-name fw-bold text-uppercase mb-1">NGUYỄN VĂN COFFEE</h4>
+            <p class="store-info mb-0 small">ĐC: 36 Văn Cao, Hải Phòng</p>
+            <p class="store-info mb-1 small">Hotline: 090.123.4567</p>
+            <div class="dashed-line my-2"></div>
+            <h5 class="invoice-title fw-bold">PHIẾU THANH TOÁN</h5>
         </div>
-        <div class="thank-you">
-            <p>Cảm ơn quý khách & Hẹn gặp lại!</p>
-            <p class="wifi-pass">Wifi: nguyenvan_coffee / Pass: 12345678</p>
+
+        <div class="invoice-meta small mb-2">
+            <div class="d-flex justify-content-between">
+                <span>Số phiếu:</span>
+                <span class="fw-bold">#<span id="print-order-id">000</span></span>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span>Thời gian:</span>
+                <span id="print-date">--/--/----</span>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span>Thu ngân:</span>
+                <span id="print-staff"><?= $_SESSION['fullname'] ?></span>
+            </div>
+        </div>
+
+        <div class="dashed-line my-2"></div>
+
+        <table class="table table-borderless table-sm mb-2 w-100 receipt-table small">
+            <thead>
+                <tr class="text-uppercase border-bottom border-dark">
+                    <th class="text-start" style="width: 40%">Món</th>
+                    <th class="text-center" style="width: 15%">SL</th>
+                    <th class="text-end" style="width: 20%">Đ.Giá</th>
+                    <th class="text-end" style="width: 25%">T.Tiền</th>
+                </tr>
+            </thead>
+            <tbody id="print-items-body">
+                </tbody>
+        </table>
+
+        <div class="dashed-line my-2"></div>
+
+        <div class="invoice-footer">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="fw-bold fs-6">TỔNG CỘNG:</span>
+                <span class="total-amount fw-bold fs-5" id="print-total">0 đ</span>
+            </div>
+            
+            <div class="dashed-line my-3"></div>
+            
+            <div class="thank-you text-center small fst-italic">
+                <p class="mb-1">Cảm ơn quý khách & Hẹn gặp lại!</p>
+                <p class="mb-0 fw-bold">Wifi: nguyenvan_coffee / Pass: 12345678</p>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="sticker-container" class="d-none">
+    </div>
+
+<div class="modal fade" id="modalStartShift" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fa-solid fa-clock"></i> BẮT ĐẦU CA LÀM VIỆC</h5>
+            </div>
+            <div class="modal-body">
+                <p>Chào <strong><?= $_SESSION['fullname'] ?></strong>! Vui lòng kiểm đếm tiền trong két (tiền lẻ/tiền mặt có sẵn) để bắt đầu.</p>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Tiền đầu ca (VNĐ):</label>
+                    <input type="number" id="start-cash-input" class="form-control form-control-lg" value="0">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary w-100" onclick="startShift()">Xác nhận & Mở bán</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEndShift" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fa-solid fa-door-closed"></i> KẾT THÚC CA & ĐĂNG XUẤT</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    Sau khi kết thúc, hệ thống sẽ tự động đăng xuất.
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Tổng tiền mặt thực tế trong két:</label>
+                    <input type="number" id="end-cash-input" class="form-control form-control-lg" placeholder="Nhập số tiền đếm được...">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Ghi chú (nếu lệch tiền):</label>
+                    <textarea id="end-note-input" class="form-control" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" onclick="endShift()">Chốt ca</button>
+            </div>
         </div>
     </div>
 </div>

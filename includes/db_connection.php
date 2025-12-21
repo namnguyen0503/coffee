@@ -11,4 +11,16 @@
         return $mysqli;
     };
     connect_db();
+    // Hàm kiểm tra xem User có đang trong ca làm việc không
+function getActiveSessionId($conn, $user_id) {
+    $stmt = $conn->prepare("SELECT id FROM work_sessions WHERE user_id = ? AND status = 'open' LIMIT 1");
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($row = $result->fetch_assoc()) {
+        return $row['id']; // Trả về ID phiên làm việc
+    }
+    return false; // Không có ca nào mở
+}
 ?>

@@ -1,164 +1,146 @@
 <?php
-    // --- PHẦN 1: CẤU HÌNH ĐỂ TRÁNH LỖI "Unexpected token <" ---
-    // Tắt toàn bộ báo lỗi hiển thị ra màn hình (quan trọng nhất)
-    session_start();
-    error_reporting(0); 
-    
-    // Set header JSON chuẩn xác
-    header('Content-Type: application/json; charset=utf-8');
-
-    // Gọi file kết nối
-    require_once '../includes/db_connection.php';
-    
-    // Lấy biến kết nối từ file db_connection (như code cũ của bạn)
-    global $mysqli; 
-
-    // Kiểm tra kết nối
-    if (!$mysqli) {
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Lỗi kết nối CSDL (mysqli is null)']);
-        exit;
-    }
-
-    // --- PHẦN 2: NHẬN DỮ LIỆU TỪ JS ---
-    $json_data = file_get_contents('php://input');
-    $data = json_decode($json_data, true);
-
-    // Kiểm tra dữ liệu đầu vào
-    if (!$data) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Dữ liệu không hợp lệ.']);
-        exit;
-    }
-
-    // Map dữ liệu từ JS gửi lên (Lưu ý: JS mới gửi key là 'total_amount')
-    $total_amount = isset($data['total_amount']) ? $data['total_amount'] : 0;
-    $items = isset($data['items']) ? $data['items'] : [];
-
-    // --- PHẦN 3: XỬ LÝ TRANSACTION (Thêm vào 2 bảng) ---
-    
-    // Bắt đầu giao dịch
-    $mysqli->begin_transaction();
-
-   // --- TRONG PHẦN 3: XỬ LÝ TRANSACTION ---
-
-// 0. Khởi tạo session để lấy user_id (nếu chưa có ở đầu file)
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-$user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 1; // Mặc định là 1 nếu test không qua login
+session_start();
+error_reporting(0);
+ini_set('display_errors', 0);
+header('Content-Type: application/json; charset=utf-8');
+require_once '../includes/db_connection.php';
 
 try {
-    // 1. Insert vào bảng ORDERS (Thêm user_id vào đây)
-    $order_date = date('Y-m-d H:i:s');
-    $status = 'paid';
+    // 1. Check Login & Ca làm việc
+    if (!isset($_SESSION['user_id'])) throw new Exception("Chưa đăng nhập!");
+    $current_session_id = getActiveSessionId($mysqli, $_SESSION['user_id']);
+    if (!$current_session_id) throw new Exception("Chưa vào ca làm việc!");
+
+    // 2. Nhận dữ liệu từ Client
+    $input = json_decode(file_get_contents("php://input"), true);
+    if (!$input || empty($input['items'])) throw new Exception("Giỏ hàng rỗng.");
+
+    // --- [XỬ LÝ VOUCHER (SERVER SIDE)] ---
+    $voucher_code = isset($input['voucher_code']) ? strtoupper(trim($input['voucher_code'])) : '';
+    $requested_percent = isset($input['discount_percent']) ? (float)$input['discount_percent'] : 0;
     
-    // SỬA TẠI ĐÂY: Thêm cột user_id và thêm một dấu ?
-    $stmt = $mysqli->prepare("INSERT INTO orders (total_price, order_date, status, user_id) VALUES (?, ?, ?, ?)");
-    
-    if (!$stmt) {
-        throw new Exception("Lỗi prepare orders: " . $mysqli->error);
-    }
+    $applied_discount_percent = 0; // Mặc định không giảm
 
-    // SỬA TẠI ĐÂY: Thêm kiểu dữ liệu "i" (integer) cho user_id và truyền biến $user_id vào
-    // "dssi" tương ứng với: double, string, string, integer
-    $stmt->bind_param("dssi", $total_amount, $order_date, $status, $user_id);
-    
-    if (!$stmt->execute()) {
-        throw new Exception("Lỗi execute orders: " . $stmt->error);
-    }
-
-    $new_order_id = $mysqli->insert_id;
-    $stmt->close();
-
-    // ... (Các phần insert order_items và trừ kho giữ nguyên) ...
-        // 2. Insert vào bảng ORDER_ITEMS (nếu có món ăn)
-        if (!empty($items)) {
-            $stmt_item = $mysqli->prepare("INSERT INTO order_items (order_id, product_id, quantity) VALUES (?, ?, ?)");
-            
-            if (!$stmt_item) {
-                throw new Exception("Lỗi prepare items: " . $mysqli->error);
-            }
-
-            foreach ($items as $item) {
-                $p_id = $item['product_id'];
-                $qty = $item['quantity'];
-
-                // i: integer -> order_id, product_id, quantity
-                $stmt_item->bind_param("iii", $new_order_id, $p_id, $qty);
-                
-                if (!$stmt_item->execute()) {
-                    throw new Exception("Lỗi thêm món ID $p_id");
-                }
-            }
-            $stmt_item->close();
-        }
-
-        // --- ĐOẠN NÀY ĐẶT TRONG TRANSACTION CỦA order_processor.php ---
-
-foreach ($items as $item) {
-    $p_id = $item['product_id'];
-    $order_qty = $item['quantity'];
-
-    // 1. Lấy công thức món
-    $stmt_recipe = $mysqli->prepare("SELECT ingredient_id, quantity_required FROM recipes WHERE product_id = ?");
-    $stmt_recipe->bind_param("i", $p_id);
-    $stmt_recipe->execute();
-    $recipe_result = $stmt_recipe->get_result();
-
-    while ($recipe = $recipe_result->fetch_assoc()) {
-        $ing_id = $recipe['ingredient_id'];
-        $qty_needed = $recipe['quantity_required'] * $order_qty;
-
-        // 2. KIỂM TRA TỒN KHO TRƯỚC (Nâng cao)
-        $stmt_check = $mysqli->prepare("SELECT name, quantity FROM ingredients WHERE id = ?");
-        $stmt_check->bind_param("i", $ing_id);
-        $stmt_check->execute();
-        $ing_data = $stmt_check->get_result()->fetch_assoc();
-
-        if ($ing_data['quantity'] < $qty_needed) {
-            // Nếu không đủ, hủy giao dịch và báo lỗi về POS
-            throw new Exception("Món này tạm hết vì không đủ: " . $ing_data['name']);
-        }
-
-        // 3. TRỪ KHO
-        $stmt_update = $mysqli->prepare("UPDATE ingredients SET quantity = quantity - ? WHERE id = ?");
-        $stmt_update->bind_param("di", $qty_needed, $ing_id);
-        if (!$stmt_update->execute()) {
-            throw new Exception("Lỗi cập nhật kho");
-        }
-
-        // 4. GHI LOG (Cho chuyên nghiệp)
-        $log_note = "Bán đơn hàng #" . $new_order_id;
-        $stmt_log = $mysqli->prepare("INSERT INTO inventory_log (ingredient_id, type, quantity, note, user_id) VALUES (?, 'export', ?, ?, ?)");
-        $u_id = $_SESSION['user_id'] ?? 1; // Mặc định là user 1 nếu chưa login
-        $stmt_log->bind_param("idsi", $ing_id, $qty_needed, $log_note, $u_id);
-        $stmt_log->execute();
-    }
-}
-
-        // 3. Nếu mọi thứ OK -> Commit
-        $mysqli->commit();
-
-        // Phản hồi thành công
-        http_response_code(200);
-        echo json_encode([
-            'success' => true, // JS mới check biến này
-            'status' => 'success',
-            'message' => 'Thanh toán thành công.',
-            'order_id' => $new_order_id
-        ]);
-
-    } catch (Exception $e) {
-        // Nếu lỗi -> Rollback (Hủy)
-        $mysqli->rollback();
+    // A. LOGIC VOUCHER ADMIN (ADMINVIP)
+    if ($voucher_code === 'ADMINVIP') {
+        // Chỉ cho phép nếu user đang login là role 'admin'
+        // Bạn cần check cột 'role' trong bảng users. Giả sử session đã lưu role.
+        // Nếu session chưa lưu role, cần query DB để check.
         
-        http_response_code(500);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Lỗi xử lý: ' . $e->getMessage()
-        ]);
+        $stmt_role = $mysqli->prepare("SELECT role FROM users WHERE id = ?");
+        $stmt_role->bind_param("i", $_SESSION['user_id']);
+        $stmt_role->execute();
+        $user_role = $stmt_role->get_result()->fetch_assoc()['role'] ?? 'staff';
+
+        if ($user_role === 'admin') {
+            // Admin được quyền set % tùy ý (nhưng không quá 100%)
+            if ($requested_percent < 0 || $requested_percent > 100) {
+                throw new Exception("Phần trăm giảm giá không hợp lệ (0-100).");
+            }
+            $applied_discount_percent = $requested_percent;
+        } else {
+            // Nếu không phải admin mà dùng mã này -> Phạt hoặc lờ đi
+            throw new Exception("Mã ADMINVIP chỉ dành cho Quản lý!");
+        }
+    }
+    // B. LOGIC VOUCHER KHÁCH HÀNG (Cố định)
+    elseif ($voucher_code === 'WELCOME') { // Ví dụ mã dùng 1 lần
+        $applied_discount_percent = 10; // Giảm cứng 10%
+    }
+    elseif ($voucher_code === 'FREESHIP') {
+        $applied_discount_percent = 5; 
+    }
+    elseif (!empty($voucher_code)) {
+        throw new Exception("Mã giảm giá không tồn tại hoặc hết hạn!");
     }
 
-    exit;
+    // 3. Tính tổng tiền (Server tự tính từ DB)
+    $server_total_amount = 0;
+    $clean_items = [];
+    $stmt_get_price = $mysqli->prepare("SELECT price FROM products WHERE id = ?");
+
+    foreach ($input['items'] as $item) {
+        $p_id = (int)$item['product_id'];
+        $qty = (int)$item['quantity'];
+        if ($qty <= 0) continue;
+
+        $stmt_get_price->bind_param("i", $p_id);
+        $stmt_get_price->execute();
+        $res = $stmt_get_price->get_result();
+        
+        if ($row = $res->fetch_assoc()) {
+            $real_price = (float)$row['price'];
+            $server_total_amount += ($real_price * $qty);
+            $clean_items[] = [
+                'product_id' => $p_id,
+                'quantity' => $qty,
+                'note' => $item['note'] ?? ''
+            ];
+        }
+    }
+
+    // 4. Áp dụng giảm giá
+    $discount_amount = $server_total_amount * ($applied_discount_percent / 100);
+    $final_amount = $server_total_amount - $discount_amount;
+
+    // 5. Lưu vào DB
+    $mysqli->begin_transaction();
+
+    // Insert Order (Lưu cả mã voucher và % vào)
+    $sql_order = "INSERT INTO orders (user_id, total_price, final_amount, discount_percent, voucher_code, order_date, status, session_id) VALUES (?, ?, ?, ?, ?, NOW(), 'paid', ?)";
+    $stmt_order = $mysqli->prepare($sql_order);
+    // d: double (cho tiền và percent)
+    $stmt_order->bind_param("idddsi", $_SESSION['user_id'], $server_total_amount, $final_amount, $applied_discount_percent, $voucher_code, $current_session_id);
+    
+    if (!$stmt_order->execute()) throw new Exception("Lỗi tạo đơn: " . $stmt_order->error);
+    $new_order_id = $mysqli->insert_id;
+
+    // Insert Items & Trừ kho (Giữ nguyên logic cũ)
+    $sql_item = "INSERT INTO order_items (order_id, product_id, quantity, note) VALUES (?, ?, ?, ?)";
+    $stmt_item = $mysqli->prepare($sql_item);
+    
+    $sql_recipe = "SELECT ingredient_id, quantity_required FROM recipes WHERE product_id = ?";
+    $stmt_recipe = $mysqli->prepare($sql_recipe);
+    
+    $sql_stock = "UPDATE ingredients SET quantity = quantity - ? WHERE id = ?";
+    $stmt_stock = $mysqli->prepare($sql_stock);
+    
+    $sql_log = "INSERT INTO inventory_log (ingredient_id, type, quantity, note, user_id, created_at) VALUES (?, 'export', ?, ?, ?, NOW())";
+    $stmt_log = $mysqli->prepare($sql_log);
+    $log_note = "Bán đơn #$new_order_id";
+
+    foreach ($clean_items as $item) {
+        $stmt_item->bind_param("iiis", $new_order_id, $item['product_id'], $item['quantity'], $item['note']);
+        $stmt_item->execute();
+
+        // Trừ kho
+        $stmt_recipe->bind_param("i", $item['product_id']);
+        $stmt_recipe->execute();
+        $res_recipe = $stmt_recipe->get_result();
+        while ($r = $res_recipe->fetch_assoc()) {
+            $ing_id = $r['ingredient_id'];
+            $need = $r['quantity_required'] * $item['quantity'];
+            
+            $stmt_stock->bind_param("di", $need, $ing_id);
+            $stmt_stock->execute();
+            
+            $stmt_log->bind_param("idsi", $ing_id, $need, $log_note, $_SESSION['user_id']);
+            $stmt_log->execute();
+        }
+    }
+
+    $mysqli->commit();
+
+    echo json_encode([
+        'success' => true, 
+        'order_id' => $new_order_id,
+        'total_original' => $server_total_amount,
+        'discount_percent' => $applied_discount_percent,
+        'final_amount' => $final_amount
+    ]);
+
+} catch (Exception $e) {
+    $mysqli->rollback();
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+}
 ?>

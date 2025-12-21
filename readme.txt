@@ -162,3 +162,5 @@ Công thức (Recipe): Kết nối products và ingredients.
 Kho vận: inventory_log kết nối ingredients và users.
 
 Cập nhật lần cuối: 2025-12-21
+
+

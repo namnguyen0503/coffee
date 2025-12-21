@@ -41,11 +41,11 @@ function startShift() {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            alert(data.message);
+            showCustomAlert(data.message);
             // Ẩn modal và reload để hệ thống chạy
             location.reload(); 
         } else {
-            alert(data.message);
+            showCustomAlert(data.message);
         }
     });
 }
@@ -64,10 +64,10 @@ function endShift() {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            alert(data.message); // Thông báo doanh thu
+            showCustomAlert(data.message); // Thông báo doanh thu
             window.location.href = '../login.php'; // Đá về trang login
         } else {
-            alert("Lỗi: " + data.message);
+            showCustomAlert("Lỗi: " + data.message);
         }
     });
 }
@@ -376,7 +376,7 @@ document.getElementById('cart-list')?.addEventListener('focusout', function(even
 // function handleCheckout() {
 //     // 1. Kiểm tra giỏ hàng
 //     if (cartItems.length === 0) {
-//         alert("Giỏ hàng rỗng! Vui lòng chọn món trước khi thanh toán.");
+//         showCustomAlert("Giỏ hàng rỗng! Vui lòng chọn món trước khi thanh toán.");
 //         return;
 //     }
 
@@ -408,7 +408,7 @@ document.getElementById('cart-list')?.addEventListener('focusout', function(even
 //         })
 //         .then(data => {
 //             if (data.success === false) {
-//                 alert(`LỖI: ${data.message}`);
+//                 showCustomAlert(`LỖI: ${data.message}`);
 //                 return;
 //             }
 
@@ -437,7 +437,7 @@ document.getElementById('cart-list')?.addEventListener('focusout', function(even
 //         invoiceDiv.classList.add('d-none');
 
 //         // 4. Reset quy trình bán hàng
-//         alert(`Thanh toán thành công! Đơn hàng #${data.order_id}`);
+//         showCustomAlert(`Thanh toán thành công! Đơn hàng #${data.order_id}`);
         
 //         cartItems = []; // Lúc này reset giỏ hàng thì kho đã được trừ ở trên rồi
 //         localStorage.removeItem(CART_STORAGE_KEY);
@@ -453,7 +453,7 @@ document.getElementById('cart-list')?.addEventListener('focusout', function(even
 // })
 //         .catch(error => {
 //             console.error('LỖI AJAX:', error);
-//             alert('Đã xảy ra lỗi kết nối. Vui lòng kiểm tra lại.');
+//             showCustomAlert('Đã xảy ra lỗi kết nối. Vui lòng kiểm tra lại.');
 //         });
 //     }
 // }
@@ -462,7 +462,7 @@ document.getElementById('cart-list')?.addEventListener('focusout', function(even
 // function handleCheckout() {
 //     // 1. Kiểm tra giỏ hàng
 //     if (cartItems.length === 0) {
-//         alert("Giỏ hàng rỗng! Vui lòng chọn món trước khi thanh toán.");
+//         showCustomAlert("Giỏ hàng rỗng! Vui lòng chọn món trước khi thanh toán.");
 //         return;
 //     }
 
@@ -495,7 +495,7 @@ document.getElementById('cart-list')?.addEventListener('focusout', function(even
 //         })
 //         .then(data => {
 //             if (data.success === false) {
-//                 alert(`LỖI: ${data.message}`);
+//                 showCustomAlert(`LỖI: ${data.message}`);
 //                 return;
 //             }
 
@@ -551,7 +551,7 @@ document.getElementById('cart-list')?.addEventListener('focusout', function(even
 //             }
 
 //             // 4. HIỆN THÔNG BÁO & IN
-//             alert(`Thanh toán thành công! Đơn hàng #${data.order_id}`);
+//             showCustomAlert(`Thanh toán thành công! Đơn hàng #${data.order_id}`);
 
 //             // Hiện khung in
 //             if(invoiceDiv) {
@@ -569,19 +569,18 @@ document.getElementById('cart-list')?.addEventListener('focusout', function(even
 //         })
 //         .catch(error => {
 //             console.error('LỖI AJAX:', error);
-//             alert('Đã xảy ra lỗi kết nối. Vui lòng kiểm tra console.');
+//             showCustomAlert('Đã xảy ra lỗi kết nối. Vui lòng kiểm tra console.');
 //         });
 //     }
 // }
-function handleCheckout() {
+function handleCheckoutInternal() {
     // 1. Kiểm tra giỏ hàng
     if (cartItems.length === 0) {
-        alert("Giỏ hàng rỗng! Vui lòng chọn món trước khi thanh toán.");
+        showCustomAlert("Giỏ hàng rỗng! Vui lòng chọn món trước khi thanh toán.");
         return;
     }
 
     // 2. Xác nhận thanh toán
-    if (confirm("Xác nhận thanh toán và IN HÓA ĐƠN?")) {
         // Tính tổng tiền (Client side estimate)
         const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
@@ -613,7 +612,7 @@ function handleCheckout() {
         })
         .then(data => {
             if (data.success === false) {
-                alert(`LỖI: ${data.message}`);
+                showCustomAlert(`LỖI: ${data.message}`);
                 return;
             }
 
@@ -733,7 +732,7 @@ function handleCheckout() {
             if (typeof order_id !== 'undefined') order_id.textContent = Number(data.order_id) + 1;
 
             // === PHẦN 4: IN ẤN ===
-            alert(`Thanh toán thành công! Đơn hàng #${data.order_id}`);
+            showCustomAlert(`Thanh toán thành công! Đơn hàng #${data.order_id}`);
             
             if(invoiceDiv) invoiceDiv.classList.remove('d-none');
             if(stickerContainer) stickerContainer.classList.remove('d-none');
@@ -744,26 +743,29 @@ function handleCheckout() {
         })
         .catch(error => {
             console.error('LỖI AJAX:', error);
-            alert('Đã xảy ra lỗi kết nối: ' + error.message);
+            showCustomAlert('Đã xảy ra lỗi kết nối: ' + error.message);
         });
-    }
+    
 }
 function handleCancel() {
     if (cartItems.length === 0) {
-        alert("Giỏ hàng rỗng! Không có gì để hủy.");
+        showCustomAlert("Giỏ hàng rỗng! Không có gì để hủy.", "warning");
         return;
     }   
-    if (confirm("Bạn có chắc chắn muốn hủy đơn hàng hiện tại không?")) {
+    
+    // THAY confirm() BẰNG showCustomConfirm
+    showCustomConfirm("Bạn có chắc chắn muốn hủy đơn hàng hiện tại không?", function() {
+        // Đây là code sẽ chạy khi bấm "Đồng ý"
         cartItems = [];
         localStorage.removeItem(CART_STORAGE_KEY);
         renderCart();
         updateTotalAmount();
-        console.log(' ĐƠN HÀNG ĐÃ BỊ HỦY BỞI NGƯỜI DÙNG.');
-        alert("Đơn hàng đã được hủy.");
-    }
+        console.log('ĐƠN HÀNG ĐÃ BỊ HỦY BỞI NGƯỜI DÙNG.');
+        showCustomAlert("Đơn hàng đã được hủy.", "info");
+    });
 }
 
-document.getElementById('checkout-btn')?.addEventListener('click', handleCheckout);
+document.getElementById('checkout-btn')?.addEventListener('click', openPaymentModal);
 document.getElementById('cancel-btn')?.addEventListener('click', handleCancel);
 
 
@@ -856,51 +858,95 @@ document.getElementById('cart-list')?.addEventListener('input', function(event) 
 
 
 // Hàm xử lý in tách đôi: In Bill -> Đợi -> In Sticker
+// function performDualPrinting() {
+//     const body = document.body;
+    
+//     // --- LẦN 1: CHUẨN BỊ IN BILL ---
+//     // 1. Reset class cũ (phòng hờ)
+//     body.classList.remove('print-mode-sticker');
+    
+//     // 2. Thêm class in Bill
+//     body.classList.add('print-mode-bill');
+    
+//     // 3. Gọi lệnh in
+//     window.print();
+    
+//     // 4. Xóa class in Bill ngay sau khi dialog in tắt (hoặc lệnh gửi đi)
+//     // Để trả lại trạng thái trắng cho lần in sau
+//     body.classList.remove('print-mode-bill');
+
+//     // --- LẦN 2: CHUẨN BỊ IN STICKER ---
+//     const hasStickers = document.querySelectorAll('.sticker-item').length > 0;
+
+//     if (hasStickers) {
+//         // Đợi 500ms - 1s để máy in nuốt lệnh 1, tránh bị nghẽn lệnh
+//         setTimeout(() => {
+//             if (confirm("In TEM DÁN CỐC (Sticker) ngay bây giờ?")) {
+//                 // 1. Thêm class in Sticker
+//                 body.classList.add('print-mode-sticker');
+                
+//                 // 2. Gọi lệnh in
+//                 window.print();
+                
+//                 // 3. Xóa class in Sticker
+//                 body.classList.remove('print-mode-sticker');
+//             }
+            
+//             // Xong xuôi thì ẩn hết đi
+//             document.getElementById('invoice-pos').classList.add('d-none');
+//             document.getElementById('sticker-container').classList.add('d-none');
+            
+//         }, 500);
+//     } else {
+//         // Nếu không có tem thì ẩn luôn invoice
+//         document.getElementById('invoice-pos').classList.add('d-none');
+//     }
+// }
 function performDualPrinting() {
     const body = document.body;
     
-    // --- LẦN 1: CHUẨN BỊ IN BILL ---
-    // 1. Reset class cũ (phòng hờ)
+    // --- LẦN 1: IN BILL ---
     body.classList.remove('print-mode-sticker');
-    
-    // 2. Thêm class in Bill
     body.classList.add('print-mode-bill');
-    
-    // 3. Gọi lệnh in
     window.print();
-    
-    // 4. Xóa class in Bill ngay sau khi dialog in tắt (hoặc lệnh gửi đi)
-    // Để trả lại trạng thái trắng cho lần in sau
     body.classList.remove('print-mode-bill');
 
-    // --- LẦN 2: CHUẨN BỊ IN STICKER ---
+    // --- LẦN 2: HỎI IN STICKER ---
     const hasStickers = document.querySelectorAll('.sticker-item').length > 0;
 
     if (hasStickers) {
-        // Đợi 500ms - 1s để máy in nuốt lệnh 1, tránh bị nghẽn lệnh
         setTimeout(() => {
-            if (confirm("In TEM DÁN CỐC (Sticker) ngay bây giờ?")) {
-                // 1. Thêm class in Sticker
+            // THAY confirm() BẰNG showCustomConfirm
+            showCustomConfirm("In TEM DÁN CỐC (Sticker) ngay bây giờ?", function() {
+                // Code chạy khi bấm Đồng ý
                 body.classList.add('print-mode-sticker');
-                
-                // 2. Gọi lệnh in
                 window.print();
-                
-                // 3. Xóa class in Sticker
                 body.classList.remove('print-mode-sticker');
-            }
+                
+                // Dọn dẹp sau khi in xong
+                finishPrintingProcess();
+            });
+
+            // Nếu người dùng không bấm gì (treo modal) thì invoice vẫn hiện
+            // Nhưng nếu họ bấm Hủy (Modal đóng) thì ta cũng nên ẩn invoice đi?
+            // Tạm thời Modal Confirm của mình chỉ xử lý nút Yes. Nút No chỉ đóng Modal.
+            // Để xử lý nút No (ẩn invoice), ta có thể thêm logic vào sự kiện đóng modal, nhưng không quá cần thiết.
             
-            // Xong xuôi thì ẩn hết đi
-            document.getElementById('invoice-pos').classList.add('d-none');
-            document.getElementById('sticker-container').classList.add('d-none');
-            
-        }, 500);
+        }, 1000); // Đợi 1s cho hộp thoại in bill tắt hẳn
     } else {
-        // Nếu không có tem thì ẩn luôn invoice
-        document.getElementById('invoice-pos').classList.add('d-none');
+        finishPrintingProcess();
     }
 }
 
+// Hàm phụ để dọn dẹp UI
+// function finishPrintingProcess() {
+//     document.getElementById('invoice-pos').classList.add('d-none');
+//     document.getElementById('sticker-container').classList.add('d-none');
+// }
+function finishPrintingProcess() {
+    document.getElementById('invoice-pos').classList.add('d-none');
+    document.getElementById('sticker-container').classList.add('d-none');
+}
 function checkVoucher() {
     const codeInput = document.getElementById('voucher-code');
     const code = codeInput.value.trim().toUpperCase();
@@ -915,15 +961,15 @@ function checkVoucher() {
 
     // 1. LOGIC ADMIN (Voucher vĩnh viễn)
     if (code === 'ADMINVIP') {
-        let percent = prompt("🔔 ADMIN DETECTED!\nNhập phần trăm muốn giảm giá (0-100):");
+        let percent = ShowCustomPrompt("🔔 ADMIN DETECTED!\nNhập phần trăm muốn giảm giá (0-100):");
         
         if (percent !== null && percent.trim() !== "") {
             percent = parseFloat(percent);
             if (!isNaN(percent) && percent >= 0 && percent <= 100) {
                 currentDiscountPercent = percent;
-                alert(`Đã áp dụng giảm giá ADMIN: ${percent}%`);
+                showCustomAlert(`Đã áp dụng giảm giá ADMIN: ${percent}%`);
             } else {
-                alert("Số phần trăm không hợp lệ!");
+                showCustomAlert("Số phần trăm không hợp lệ!");
                 currentDiscountPercent = 0;
                 codeInput.value = "";
             }
@@ -936,14 +982,14 @@ function checkVoucher() {
     // 2. LOGIC VOUCHER KHÁCH (Dùng 1 lần - Client chỉ hiển thị giả định, Server sẽ check lại)
     else if (code === 'WELCOME') {
         currentDiscountPercent = 10;
-        alert("Áp dụng mã WELCOME: Giảm 10%");
+        showCustomAlert("Áp dụng mã WELCOME: Giảm 10%");
     }
     else if (code === 'FREESHIP') {
         currentDiscountPercent = 5;
-        alert("Áp dụng mã FREESHIP: Giảm 5%");
+        showCustomAlert("Áp dụng mã FREESHIP: Giảm 5%");
     }
     else {
-        alert("Mã giảm giá không hợp lệ!");
+        showCustomAlert("Mã giảm giá không hợp lệ!");
         currentDiscountPercent = 0;
         codeInput.value = "";
     }
@@ -952,3 +998,177 @@ function checkVoucher() {
     discountDisplay.textContent = `-${currentDiscountPercent}%`;
     updateTotalAmount(); // Tính lại tổng tiền hiển thị
 }
+
+/* =============================================================
+   LOGIC MODAL TÍNH TIỀN THỪA (NEW UX)
+   ============================================================= */
+
+// Biến lưu tổng tiền cuối cùng (sau khi trừ voucher)
+let finalPaymentAmount = 0; 
+
+function openPaymentModal() {
+    // 1. Kiểm tra giỏ hàng trước
+    if (cartItems.length === 0) {
+        showCustomAlert("Giỏ hàng rỗng!");
+        return;
+    }
+
+    // 2. Tính toán tổng tiền cần thanh toán
+    const totalOriginal = cartItems.reduce((sum, item) => sum + (Number(item.price) * Number(item.quantity)), 0);
+    const discountAmount = totalOriginal * (currentDiscountPercent / 100);
+    finalPaymentAmount = totalOriginal - discountAmount;
+
+    // 3. Reset giao diện Modal
+    document.getElementById('pay-total-display').textContent = finalPaymentAmount.toLocaleString('vi-VN') + ' đ';
+    document.getElementById('customer-pay-input').value = ''; // Reset ô nhập
+    document.getElementById('change-due-display').textContent = '0 đ';
+    document.getElementById('change-due-display').className = 'fw-bold fs-2 text-danger'; // Mặc định màu đỏ (chưa đủ tiền)
+
+    // 4. Mở Modal
+    const modal = new bootstrap.Modal(document.getElementById('modalPayment'));
+    modal.show();
+
+    // 5. Auto focus vào ô nhập tiền để nhân viên gõ luôn
+    setTimeout(() => {
+        document.getElementById('customer-pay-input').focus();
+    }, 500);
+}
+
+// Sự kiện: Khi nhân viên nhập tiền khách đưa
+document.getElementById('customer-pay-input')?.addEventListener('input', function(e) {
+    calculateChange(Number(e.target.value));
+});
+
+// Sự kiện: Bấm các nút tiền nhanh (50k, 100k...)
+document.querySelectorAll('.quick-pay').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const val = Number(this.dataset.value);
+        document.getElementById('customer-pay-input').value = val;
+        calculateChange(val);
+    });
+});
+
+// Sự kiện: Bấm nút "Đủ tiền" (Khách đưa vừa zin)
+document.getElementById('btn-pay-exact')?.addEventListener('click', function() {
+    document.getElementById('customer-pay-input').value = finalPaymentAmount;
+    calculateChange(finalPaymentAmount);
+});
+
+// Hàm tính toán hiển thị
+function calculateChange(customerGive) {
+    const change = customerGive - finalPaymentAmount;
+    const changeDisplay = document.getElementById('change-due-display');
+
+    if (change >= 0) {
+        changeDisplay.textContent = change.toLocaleString('vi-VN') + ' đ';
+        changeDisplay.className = 'fw-bold fs-2 text-primary'; // Đủ tiền -> Màu xanh
+        document.getElementById('btn-confirm-print').disabled = false;
+    } else {
+        changeDisplay.textContent = "Thiếu " + Math.abs(change).toLocaleString('vi-VN') + " đ";
+        changeDisplay.className = 'fw-bold fs-3 text-danger'; // Thiếu tiền -> Màu đỏ
+        // document.getElementById('btn-confirm-print').disabled = true; // Mở dòng này nếu muốn chặn không cho in khi thiếu tiền
+    }
+}
+
+// Sự kiện: Bấm nút "IN HÓA ĐƠN" trong Modal
+document.getElementById('btn-confirm-print')?.addEventListener('click', function() {
+    // Ẩn modal trước
+    const modalEl = document.getElementById('modalPayment');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    modal.hide();
+
+    // Gọi hàm thanh toán gốc (Backend + In ấn)
+    handleCheckoutInternal(); 
+});
+
+/* =============================================================
+   HELPER: HỆ THỐNG MODAL THAY THẾ ALERT/CONFIRM
+   ============================================================= */
+
+// 1. Hàm thay thế showCustomAlert()
+function showCustomAlert(message, type = 'info') {
+    const modalEl = document.getElementById('customAlertModal');
+    const header = document.getElementById('alert-header');
+    const title = document.getElementById('alert-title');
+    const icon = document.getElementById('alert-icon');
+    const msg = document.getElementById('alert-message');
+
+    msg.textContent = message;
+
+    // Cấu hình màu sắc icon/header
+    header.className = 'modal-header text-white'; // Reset
+    icon.className = 'fa-3x mb-3'; // Reset
+
+    if (type === 'success') {
+        header.classList.add('bg-success');
+        title.textContent = 'Thành công';
+        icon.classList.add('fa-solid', 'fa-circle-check', 'text-success');
+    } else if (type === 'error' || type === 'danger') {
+        header.classList.add('bg-danger');
+        title.textContent = 'Lỗi';
+        icon.classList.add('fa-solid', 'fa-circle-xmark', 'text-danger');
+    } else if (type === 'warning') {
+        header.classList.add('bg-warning');
+        title.textContent = 'Cảnh báo';
+        icon.classList.add('fa-solid', 'fa-triangle-exclamation', 'text-warning');
+    } else {
+        header.classList.add('bg-primary');
+        title.textContent = 'Thông báo';
+        icon.classList.add('fa-solid', 'fa-circle-info', 'text-primary');
+    }
+
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+}
+
+// 2. Hàm thay thế confirm()
+// Vì Modal không chặn dòng code (non-blocking) như confirm(), ta phải dùng Callback function
+let confirmCallback = null; // Biến lưu hành động sẽ làm khi bấm Yes
+
+function showCustomConfirm(message, callback) {
+    const modalEl = document.getElementById('customConfirmModal');
+    document.getElementById('confirm-message').textContent = message;
+    
+    // Lưu callback lại để dùng khi bấm nút "Đồng ý"
+    confirmCallback = callback;
+
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+}
+
+// Gắn sự kiện cho nút "Đồng ý" (Chỉ làm 1 lần khi load trang)
+document.getElementById('btn-confirm-yes')?.addEventListener('click', function() {
+    if (confirmCallback) {
+        confirmCallback(); // Chạy hành động đã lưu
+    }
+    // Ẩn modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('customConfirmModal'));
+    modal.hide();
+});
+
+
+// 3. Hàm thay thế ShowCustomPrompt() (Dành riêng cho Voucher Admin)
+let promptCallback = null;
+
+function showCustomPrompt(message, callback) {
+    const modalEl = document.getElementById('customPromptModal');
+    document.getElementById('prompt-message').textContent = message;
+    const input = document.getElementById('prompt-input');
+    input.value = ''; // Reset
+
+    promptCallback = callback;
+    
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+
+    setTimeout(() => input.focus(), 500); // Auto focus
+}
+
+document.getElementById('btn-prompt-submit')?.addEventListener('click', function() {
+    const val = document.getElementById('prompt-input').value;
+    if (promptCallback) {
+        promptCallback(val);
+    }
+    const modal = bootstrap.Modal.getInstance(document.getElementById('customPromptModal'));
+    modal.hide();
+});

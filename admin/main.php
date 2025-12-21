@@ -103,7 +103,45 @@
         <div id="hienthi-sanpham"></div>
 
         <div id="hienthi-baocao" class="mode-section">
-            <div class="row"><div class="col-12 col-sm-6 col-md-3"><div class="info-box"><span class="info-box-icon bg-info elevation-1"><i class="fas fa-coins"></i></span><div class="info-box-content"><span class="info-box-text">Doanh thu</span><span class="info-box-number" id="rpt-revenue">0 đ</span></div></div></div><div class="col-12 col-sm-6 col-md-3"><div class="info-box mb-3"><span class="info-box-icon bg-danger elevation-1"><i class="fas fa-shopping-cart"></i></span><div class="info-box-content"><span class="info-box-text">Tổng đơn</span><span class="info-box-number" id="rpt-orders">0</span></div></div></div><div class="col-12 col-sm-6 col-md-3"><div class="info-box mb-3"><span class="info-box-icon bg-success elevation-1"><i class="fas fa-wallet"></i></span><div class="info-box-content"><span class="info-box-text">Tiền mặt</span><span class="info-box-number" id="rpt-cash">0 đ</span></div></div></div><div class="col-12 col-sm-6 col-md-3"><div class="info-box mb-3"><span class="info-box-icon bg-warning elevation-1"><i class="fas fa-tag"></i></span><div class="info-box-content"><span class="info-box-text">Giảm giá</span><span class="info-box-number" id="rpt-discount">0 đ</span></div></div></div></div>
+            <div class="row">
+                <div class="col-12 col-sm-6 col-md-3">
+                    <div class="info-box">
+                        <span class="info-box-icon bg-info elevation-1"><i class="fas fa-coins"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Doanh thu</span>
+                            <span class="info-box-number" id="rpt-revenue">0 đ</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6 col-md-3">
+                    <div class="info-box mb-3">
+                        <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-box-open"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Tiền nguyên liệu</span>
+                            <span class="info-box-number text-danger" id="rpt-cogs">0 đ</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6 col-md-3">
+                    <div class="info-box mb-3">
+                        <span class="info-box-icon bg-success elevation-1"><i class="fas fa-piggy-bank"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Lợi nhuận thực</span>
+                            <span class="info-box-number text-success" id="rpt-profit">0 đ</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6 col-md-3">
+                    <div class="info-box mb-3">
+                        <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-shopping-cart"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Tổng đơn</span>
+                            <span class="info-box-number" id="rpt-orders">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="row"><div class="col-md-12"><div class="card"><div class="card-body"><canvas id="revenue-chart" height="250"></canvas></div></div></div></div>
             <div class="row"><div class="col-12"><div class="card"><div class="card-body table-responsive p-0" style="height: 300px;"><table class="table table-head-fixed text-nowrap"><thead><tr><th>Mã đơn</th><th>Thời gian</th><th>Nhân viên</th><th class="text-right">Thành tiền</th></tr></thead><tbody id="rpt-table-body"></tbody></table></div></div></div></div>
         </div>
@@ -148,26 +186,7 @@
   <footer class="main-footer"><strong>Coffee Nguyễn Văn</strong></footer>
 </div>
 
-<div class="modal fade" id="modalAddSchedule">
-  <div class="modal-dialog modal-sm">
-    <div class="modal-content">
-      <div class="modal-header bg-primary"><h5 class="modal-title text-white">Xếp nhân viên</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div>
-      <form id="formSchedule" onsubmit="luuPhanCa(event)">
-          <div class="modal-body">
-             <input type="hidden" name="shift_date" id="sch_date">
-             <input type="hidden" name="shift_type" id="sch_type">
-             <p>Ngày: <b id="lbl_date"></b> - Ca: <b id="lbl_type"></b></p>
-             <div class="form-group">
-                 <label>Chọn nhân viên:</label>
-                 <select class="form-control" name="user_id" id="sch_users"></select>
-             </div>
-          </div>
-          <div class="modal-footer"><button type="submit" class="btn btn-primary btn-block">Thêm vào ca</button></div>
-      </form>
-    </div>
-  </div>
-</div>
-
+<div class="modal fade" id="modalAddSchedule"><div class="modal-dialog modal-sm"><div class="modal-content"><div class="modal-header bg-primary"><h5 class="modal-title text-white">Xếp nhân viên</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div><form id="formSchedule" onsubmit="luuPhanCa(event)"><div class="modal-body"><input type="hidden" name="shift_date" id="sch_date"><input type="hidden" name="shift_type" id="sch_type"><p>Ngày: <b id="lbl_date"></b> - Ca: <b id="lbl_type"></b></p><div class="form-group"><label>Chọn nhân viên:</label><select class="form-control" name="user_id" id="sch_users"></select></div></div><div class="modal-footer"><button type="submit" class="btn btn-primary btn-block">Thêm vào ca</button></div></form></div></div></div>
 <div class="modal fade" id="modalAddVoucher"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-info"><h5 class="modal-title text-white">Tạo Mã Giảm Giá</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div><form id="formAddVoucher" onsubmit="themVoucher(event)"><div class="modal-body"><div class="form-group"><label>Mã Voucher</label><input type="text" class="form-control" name="code" style="text-transform: uppercase;" required></div><div class="form-group"><label>Giảm (%)</label><input type="number" class="form-control" name="percent" min="1" max="100" required></div><div class="form-group"><label>Mô tả</label><input type="text" class="form-control" name="description"></div></div><div class="modal-footer"><button type="submit" class="btn btn-info">Tạo mã</button></div></form></div></div></div>
 <div class="modal fade" id="modalOrderDetail"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-info"><h5 class="modal-title text-white">Chi tiết đơn hàng</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div><div class="modal-body" id="order-detail-content"></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button></div></div></div></div>
 <div class="modal fade" id="modalDelete"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-danger"><h5 class="modal-title text-white">Xác nhận xóa</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div><div class="modal-body"><p>Xác nhận xóa?</p><input type="hidden" id="idDelete"></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button><button type="button" class="btn btn-danger" onclick="xacNhanXoa()">Xóa</button></div></div></div></div>
@@ -184,40 +203,29 @@
     var currentMode = 'menu';
     var currentCategory = 1;
     var ingredientsList = [];
-    var usersList = []; // Danh sách user để chọn khi xếp lịch
-    var currentWeekStart = ''; // Ngày bắt đầu tuần đang xem
+    var usersList = [];
+    var currentWeekStart = '';
     var myChart = null;
 
     $(document).ready(function(){
-        // Auto update status khi load trang
         autoUpdateStatus();
-
         var today = new Date();
-        // Tìm ngày thứ 2 của tuần này
         var day = today.getDay() || 7; 
         if(day !== 1) today.setHours(-24 * (day - 1)); 
         currentWeekStart = today.toISOString().split('T')[0];
 
-        // Mặc định ngày báo cáo
         var rptEnd = new Date().toISOString().split('T')[0];
         $('#report_end').val(rptEnd);
         $('#report_start').val(currentWeekStart);
 
         taiNoiDung();
         loadIngredients();
-        loadUsersForSchedule(); // Tải sẵn danh sách user
+        updateSelectUsers(); // Load user sẵn
         $('#searchInput').on('keyup', function(){ taiNoiDung(); });
     });
 
-    // --- TỰ ĐỘNG CẬP NHẬT TRẠNG THÁI USER ---
     function autoUpdateStatus() {
-        $.ajax({
-            url: 'api/auto_update_status.php',
-            type: 'GET',
-            success: function(res) {
-                console.log("Auto Update Status: " + res.message);
-            }
-        });
+        $.ajax({ url: 'api/auto_update_status.php', type: 'GET', success: function(res) { console.log("Auto Update Status: " + res.message); } });
     }
 
     // --- CHUYỂN CHẾ ĐỘ ---
@@ -240,163 +248,79 @@
         } else if(mode == 'report') {
             $('#link-report').addClass('active'); $('#page-title').text('Báo cáo doanh thu'); $('#searchForm').hide(); $('#report-controls').show(); $('#hienthi-baocao').show(); taiBaoCao();
         } else if(mode == 'schedule') {
-            $('#link-schedule').addClass('active'); $('#page-title').text('Lịch làm việc'); $('#searchForm').hide(); $('#btn-group-schedule').show(); $('#hienthi-schedule').show();
-            taiLichLamViec();
+            $('#link-schedule').addClass('active'); $('#page-title').text('Lịch làm việc'); $('#searchForm').hide(); $('#btn-group-schedule').show(); $('#hienthi-schedule').show(); taiLichLamViec();
         }
     };
 
-    // --- LOGIC PHÂN CA (SCHEDULE) ---
-    function taiLichLamViec() {
+    // --- LOGIC BÁO CÁO (ĐÃ CẬP NHẬT) ---
+    window.locBaoCao = function(e) { e.preventDefault(); taiBaoCao(); }
+    window.taiBaoCao = function() {
+        var start = $('#report_start').val();
+        var end = $('#report_end').val();
+        
         $.ajax({
-            url: 'api/get_schedules.php',
+            url: 'api/get_report_stats.php',
             type: 'GET',
-            data: {start_date: currentWeekStart},
+            data: {start: start, end: end},
             dataType: 'json',
             success: function(res) {
-                renderScheduleTable(res.data, res.start_date);
+                var fmt = new Intl.NumberFormat('vi-VN');
+                
+                // Hiển thị Doanh thu, COGS, Lợi nhuận
+                $('#rpt-revenue').text(fmt.format(res.summary.revenue) + ' đ');
+                $('#rpt-cogs').text(fmt.format(res.summary.cogs) + ' đ');
+                $('#rpt-profit').text(fmt.format(res.summary.profit) + ' đ');
+                $('#rpt-orders').text(res.summary.orders);
+                
+                // Bảng và Biểu đồ
+                $('#rpt-table-body').html(res.table);
+                renderChart(res.chart.labels, res.chart.data);
             }
         });
     }
 
+    // --- LOGIC KHÁC GIỮ NGUYÊN ---
+    function taiLichLamViec() {
+        $.ajax({
+            url: 'api/get_schedules.php', type: 'GET', data: {start_date: currentWeekStart}, dataType: 'json',
+            success: function(res) { renderScheduleTable(res.data, res.start_date); }
+        });
+    }
     function renderScheduleTable(data, startDate) {
-        // Xóa dữ liệu cũ
-        $('.table-schedule td').html('');
-        $('.btn-add-shift').remove();
-
+        $('.table-schedule td').html(''); $('.btn-add-shift').remove();
         var start = new Date(startDate);
         var endDate = new Date(start); endDate.setDate(start.getDate() + 6);
         $('#schedule-range').text(formatDate(start) + ' - ' + formatDate(endDate));
-
-        // Render header ngày
         for(var i=0; i<7; i++) {
-            var d = new Date(start);
-            d.setDate(start.getDate() + i);
-            $('#d-'+i).text(formatDate(d));
-            
-            // Nút thêm ca
+            var d = new Date(start); d.setDate(start.getDate() + i); $('#d-'+i).text(formatDate(d));
             var dateStr = d.toISOString().split('T')[0];
             $('#cell-morning-'+i).append(`<button class="btn btn-outline-primary btn-xs btn-add-shift" onclick="openAddShift('${dateStr}', 'morning')">+ Thêm</button>`);
             $('#cell-afternoon-'+i).append(`<button class="btn btn-outline-primary btn-xs btn-add-shift" onclick="openAddShift('${dateStr}', 'afternoon')">+ Thêm</button>`);
         }
-
-        // Render dữ liệu nhân viên
         data.forEach(function(item){
-            // Tính xem item thuộc cột thứ mấy (0-6)
-            var itemDate = new Date(item.shift_date);
-            var diffTime = Math.abs(itemDate - start);
-            var dayIndex = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-            
-            var cellId = '#cell-' + item.shift_type + '-' + dayIndex;
-            var html = `<div class="shift-item">
-                            <span>${item.fullname}</span>
-                            <i class="fas fa-times btn-del-shift" onclick="xoaCa(${item.id})"></i>
-                        </div>`;
-            $(cellId).prepend(html); // Prepend để nút thêm luôn ở dưới
+            var diff = Math.ceil(Math.abs(new Date(item.shift_date) - start) / (86400000));
+            var cellId = '#cell-' + item.shift_type + '-' + diff;
+            $(cellId).prepend(`<div class="shift-item"><span>${item.fullname}</span><i class="fas fa-times btn-del-shift" onclick="xoaCa(${item.id})"></i></div>`);
         });
     }
-
-    function doiTuan(direction) {
-        var d = new Date(currentWeekStart);
-        d.setDate(d.getDate() + (direction * 7));
-        currentWeekStart = d.toISOString().split('T')[0];
-        taiLichLamViec();
-    }
-
-    function loadUsersForSchedule() {
-        $.ajax({url: 'api/get_users.php', success: function(html){
-            // Hacky way: parse HTML to get names, better create separate API returning JSON
-            // But for simplicity, I'll assume usersList is populated or I'll just allow typing ID
-            // Let's optimize: Create a simpler dropdown from the HTML response is hard.
-            // Better: call a dedicated JSON API. I will simulate it by parsing the card titles if needed
-            // Or simpler: Just re-use get_users.php but modify it to return JSON if param json=1 passed.
-            // Let's stick to existing: I will fetch users once and store global.
-        }});
-        // REPLACEMENT: Fetch users for dropdown
-        // Since get_users.php returns HTML, I will create a quick logic here or assume admin knows IDs?
-        // NO, UX needs dropdown. I'll rely on a small trick: 
-        // I will add a parameter to get_users.php?format=json in future.
-        // For now, I'll extract from the HTML if displayed, OR better:
-        // I will just use the same API `api/get_users.php` but modify it slightly or parse it.
-        // WAIT: I can just fetch `api/get_users.php`... actually let's just create a quick cleaner way.
-        // I'll update the `sch_users` select options dynamically when user mode loads.
-    }
-    
-    // Quick Fix to populate Select Box for Shift
-    // We need list of users (ID + Name). 
-    // Since we don't have a JSON API for users, I will add a small inline PHP block in `get_users.php` or just parse.
-    // Let's assume the user will just type ID for now? NO.
-    // I will write a small ajax call to `api/get_users.php` and parse the names.
-    function updateSelectUsers() {
-         // This is a bit manual because get_users returns HTML
-         // Ideally create `api/get_users_json.php`
-         // For this demo, I will assume the user clicks "User Manager" tab once to load data :)
-         // Or better: I will add a specific call here that expects JSON if I modified `get_users.php`.
-         // Since I cannot modify `get_users.php` to return JSON without breaking other parts, 
-         // I will parse the `users` table directly? No.
-         // Let's just use the HTML response.
-         $.get('api/get_users.php', function(data){
-             var html = $(data);
-             var options = '';
-             html.find('.btn-edit-user').each(function(){
-                 var id = $(this).data('id');
-                 var name = $(this).data('fullname');
-                 options += `<option value="${id}">${name}</option>`;
-             });
-             $('#sch_users').html(options);
-         });
-    }
-
-    function openAddShift(date, type) {
-        $('#sch_date').val(date);
-        $('#sch_type').val(type);
-        $('#lbl_date').text(formatDate(new Date(date)));
-        $('#lbl_type').text(type == 'morning' ? 'Sáng (7h-12h)' : 'Chiều (12h-17h)');
-        updateSelectUsers();
-        $('#modalAddSchedule').modal('show');
-    }
-
-    function luuPhanCa(e) {
-        e.preventDefault();
-        $.ajax({
-            url: 'api/add_schedule.php',
-            type: 'POST',
-            data: $('#formSchedule').serialize(),
-            dataType: 'json',
-            success: function(res) {
-                if(res.status == 'success') {
-                    $('#modalAddSchedule').modal('hide');
-                    taiLichLamViec();
-                } else { alert(res.message); }
-            }
-        });
-    }
-
-    function xoaCa(id) {
-        if(!confirm("Xóa nhân viên khỏi ca này?")) return;
-        $.ajax({ url: 'api/delete_schedule.php', type: 'POST', data: {id: id}, success: function(){ taiLichLamViec(); } });
-    }
-
-    function formatDate(date) {
-        return date.getDate() + '/' + (date.getMonth()+1);
-    }
-
-    // --- OTHER FUNCTIONS (Keep existing) ---
+    function doiTuan(dir) { var d = new Date(currentWeekStart); d.setDate(d.getDate() + dir*7); currentWeekStart = d.toISOString().split('T')[0]; taiLichLamViec(); }
+    function updateSelectUsers() { $.get('api/get_users.php', function(data){ var h=$(data), o=''; h.find('.btn-edit-user').each(function(){o+=`<option value="${$(this).data('id')}">${$(this).data('fullname')}</option>`}); $('#sch_users').html(o); }); }
+    function openAddShift(d, t) { $('#sch_date').val(d); $('#sch_type').val(t); $('#lbl_date').text(formatDate(new Date(d))); $('#lbl_type').text(t=='morning'?'Sáng':'Chiều'); $('#modalAddSchedule').modal('show'); }
+    function luuPhanCa(e) { e.preventDefault(); $.ajax({ url: 'api/add_schedule.php', type: 'POST', data: $('#formSchedule').serialize(), dataType: 'json', success: function(res){ if(res.status=='success'){ $('#modalAddSchedule').modal('hide'); taiLichLamViec(); } else alert(res.message); } }); }
+    function xoaCa(id) { if(confirm("Xóa?")) $.ajax({ url: 'api/delete_schedule.php', type: 'POST', data: {id: id}, success: function(){ taiLichLamViec(); } }); }
+    function formatDate(d) { return d.getDate()+'/'+(d.getMonth()+1); }
     window.taiNoiDung = function() {
         if(currentMode == 'report' || currentMode == 'schedule') return;
-        var keyword = $('#searchInput').val();
-        var urlApi = '', dataApi = { search: keyword };
-        if (currentMode == 'menu') { urlApi = 'api/get_items.php'; dataApi.category = currentCategory; } 
-        else if (currentMode == 'user') { urlApi = 'api/get_users.php'; } 
-        else if (currentMode == 'order') { urlApi = 'api/get_orders.php'; }
-        else if (currentMode == 'voucher') { urlApi = 'api/get_vouchers.php'; }
-        $.ajax({ url: urlApi, type: 'GET', data: dataApi, success: function(data) { $('#hienthi-sanpham').html(data); } });
+        var k = $('#searchInput').val(); var url='', d={search: k};
+        if (currentMode == 'menu') { url='api/get_items.php'; d.category=currentCategory; } 
+        else if (currentMode == 'user') url='api/get_users.php';
+        else if (currentMode == 'order') url='api/get_orders.php';
+        else if (currentMode == 'voucher') url='api/get_vouchers.php';
+        $.ajax({ url: url, type: 'GET', data: d, success: function(data) { $('#hienthi-sanpham').html(data); } });
     };
-    // Keep existing helper functions (taiBaoCao, renderChart, themVoucher, xoaVoucher, etc.)
-    // ... (Toàn bộ code cũ của các chức năng khác giữ nguyên) ...
-    window.locBaoCao = function(e) { e.preventDefault(); taiBaoCao(); }
-    window.taiBaoCao = function() { var start = $('#report_start').val(); var end = $('#report_end').val(); $.ajax({ url: 'api/get_report_stats.php', type: 'GET', data: {start: start, end: end}, dataType: 'json', success: function(res) { $('#rpt-revenue').text(new Intl.NumberFormat('vi-VN').format(res.summary.revenue) + ' đ'); $('#rpt-orders').text(res.summary.orders); $('#rpt-cash').text(new Intl.NumberFormat('vi-VN').format(res.summary.cash) + ' đ'); $('#rpt-discount').text(new Intl.NumberFormat('vi-VN').format(res.summary.discount) + ' đ'); $('#rpt-table-body').html(res.table); renderChart(res.chart.labels, res.chart.data); } }); }
-    function renderChart(labels, data) { var ctx = document.getElementById('revenue-chart').getContext('2d'); if (myChart) { myChart.destroy(); } myChart = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'Doanh thu (VNĐ)', data: data, backgroundColor: 'rgba(60, 141, 188, 0.9)', borderColor: 'rgba(60, 141, 188, 0.8)', borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } } }); }
-    window.xuatExcel = function() { var start = $('#report_start').val(); var end = $('#report_end').val(); window.location.href = 'api/export_excel.php?start=' + start + '&end=' + end; }
+    function renderChart(l, d) { var ctx = document.getElementById('revenue-chart').getContext('2d'); if (myChart) myChart.destroy(); myChart = new Chart(ctx, { type: 'bar', data: { labels: l, datasets: [{ label: 'Doanh thu', data: d, backgroundColor: 'rgba(60,141,188,0.9)' }] }, options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true } } } }); }
+    window.xuatExcel = function() { window.location.href = 'api/export_excel.php?start='+$('#report_start').val()+'&end='+$('#report_end').val(); }
+    // ... Các hàm themVoucher, themMon, edit, delete cũ giữ nguyên ...
     window.themVoucher = function(e) { e.preventDefault(); $.ajax({ url: 'api/add_voucher.php', type: 'POST', data: $('#formAddVoucher').serialize(), dataType: 'json', success: function(res) { if(res.status == 'success') { alert(res.message); $('#modalAddVoucher').modal('hide'); $('#formAddVoucher')[0].reset(); taiNoiDung(); } else { alert(res.message); } } }); }
     window.xoaVoucher = function(id) { if(!confirm("Xóa mã này?")) return; $.ajax({ url: 'api/delete_voucher.php', type: 'POST', data: {id: id}, dataType: 'json', success: function(res) { taiNoiDung(); } }); }
     window.xuLyThemUser = function(e) { e.preventDefault(); $.ajax({ url: 'api/add_user.php', type: 'POST', data: $('#formAddUser').serialize(), dataType: 'json', success: function(res) { if(res.status=='success'){ alert(res.message); $('#modalAddUser').modal('hide'); taiNoiDung(); } else alert(res.message); } }); };
@@ -410,7 +334,6 @@
     window.luuSua = function(e) { e.preventDefault(); var fd = new FormData(document.getElementById('formEdit')); $.ajax({ url: 'api/update_item.php', type: 'POST', data: fd, contentType: false, processData: false, dataType: 'json', success: function(res){ if(res.status=='success'){ $('#modalEdit').modal('hide'); alert('Cập nhật xong!'); taiNoiDung(); } else alert(res.message); } }); };
     $(document).on('click', '.btn-delete', function(){ $('#idDelete').val($(this).data('id')); $('#modalDelete').modal('show'); });
     window.xacNhanXoa = function() { $.ajax({ url: 'api/delete_item.php', type: 'POST', data: {id: $('#idDelete').val()}, dataType: 'json', success: function(res){ $('#modalDelete').modal('hide'); if(res.status=='success') taiNoiDung(); else alert(res.message); } }); };
-
 </script>
 </body>
 </html>

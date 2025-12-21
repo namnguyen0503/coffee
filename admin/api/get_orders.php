@@ -1,14 +1,15 @@
 <?php
-require '../tinh-nang/db_connection.php';$conn = connect_db();
+require '../tinh-nang/db_connection.php';
+$conn = connect_db();
 
-// Lấy tham số tìm kiếm (nếu tìm theo ID đơn hoặc tên nhân viên)
 $search = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
 
+// Lấy đơn hàng kèm tên nhân viên
 $sql = "SELECT o.*, u.fullname as staff_name 
         FROM orders o 
         LEFT JOIN users u ON o.user_id = u.id 
         WHERE o.id LIKE '%$search%' OR u.fullname LIKE '%$search%'
-        ORDER BY o.order_date DESC LIMIT 50"; // Lấy 50 đơn mới nhất
+        ORDER BY o.order_date DESC LIMIT 50";
 
 $query = mysqli_query($conn, $sql);
 
@@ -27,14 +28,16 @@ if (mysqli_num_rows($query) > 0) {
             <tbody>';
     
     while ($row = mysqli_fetch_assoc($query)) {
+        // Hiển thị trạng thái
         $status_badge = '';
         if($row['status'] == 'paid') $status_badge = '<span class="badge badge-success">Đã thanh toán</span>';
         elseif($row['status'] == 'canceled') $status_badge = '<span class="badge badge-danger">Đã hủy</span>';
         else $status_badge = '<span class="badge badge-warning">Chưa thanh toán</span>';
 
+        // Format tiền
         $final_price = number_format($row['final_amount'], 0, ',', '.');
         
-        // Chỉ hiện nút Hủy nếu đơn chưa hủy
+        // Nút Hủy chỉ hiện khi đơn chưa hủy
         $btn_cancel = ($row['status'] != 'canceled') ? 
             '<button class="btn btn-sm btn-danger ml-1" onclick="xacNhanHuy('.$row['id'].')">
                 <i class="fas fa-ban"></i> Hủy
@@ -48,7 +51,7 @@ if (mysqli_num_rows($query) > 0) {
                 <td>'.$status_badge.'</td>
                 <td class="text-center">
                     <button class="btn btn-sm btn-info" onclick="xemChiTietDon('.$row['id'].')">
-                        <i class="fas fa-eye"></i> Chi tiết
+                        <i class="fas fa-eye"></i> Xem
                     </button>
                     '.$btn_cancel.'
                 </td>

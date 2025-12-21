@@ -334,6 +334,48 @@
     window.luuSua = function(e) { e.preventDefault(); var fd = new FormData(document.getElementById('formEdit')); $.ajax({ url: 'api/update_item.php', type: 'POST', data: fd, contentType: false, processData: false, dataType: 'json', success: function(res){ if(res.status=='success'){ $('#modalEdit').modal('hide'); alert('Cập nhật xong!'); taiNoiDung(); } else alert(res.message); } }); };
     $(document).on('click', '.btn-delete', function(){ $('#idDelete').val($(this).data('id')); $('#modalDelete').modal('show'); });
     window.xacNhanXoa = function() { $.ajax({ url: 'api/delete_item.php', type: 'POST', data: {id: $('#idDelete').val()}, dataType: 'json', success: function(res){ $('#modalDelete').modal('hide'); if(res.status=='success') taiNoiDung(); else alert(res.message); } }); };
+// --- LOGIC XỬ LÝ ĐƠN HÀNG ---
+
+// Hàm 1: Xem chi tiết các món trong một đơn hàng
+window.xemChiTietDon = function(orderId) {
+    $.ajax({
+        url: 'api/get_order_detail.php', // Gọi API lấy món
+        type: 'GET',
+        data: { id: orderId },
+        success: function(data) {
+            $('#order-detail-content').html(data); // Đổ dữ liệu vào Modal
+            $('#modalOrderDetail').modal('show');   // Hiện Modal chi tiết
+        },
+        error: function() {
+            alert('Lỗi: Không thể tải chi tiết đơn hàng.');
+        }
+    });
+};
+
+// Hàm 2: Xử lý hủy đơn hàng và hoàn nguyên liệu vào kho
+window.xacNhanHuy = function(orderId) {
+    if (!confirm('Bạn có chắc chắn muốn HỦY đơn hàng #' + orderId + '?\nNguyên liệu sẽ được hoàn lại kho và doanh thu ca làm việc sẽ bị trừ.')) {
+        return;
+    }
+
+    $.ajax({
+        url: 'api/cancel_order.php', // Gọi API xử lý hủy
+        type: 'POST',
+        data: { id: orderId },
+        dataType: 'json',
+        success: function(res) {
+            if (res.status == 'success') {
+                alert(res.message);
+                taiNoiDung(); // Tải lại danh sách đơn hàng để cập nhật trạng thái mới
+            } else {
+                alert('Lỗi: ' + res.message);
+            }
+        },
+        error: function() {
+            alert('Lỗi kết nối server khi thực hiện hủy đơn.');
+        }
+    });
+};
 </script>
 </body>
 </html>

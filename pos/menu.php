@@ -341,6 +341,104 @@ while ($row = $recipe_result->fetch_assoc()) {
     </div>
 </div>
 
+<div class="modal fade" id="modalPayment" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fa-solid fa-cash-register"></i> XÁC NHẬN THANH TOÁN</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <small class="text-muted text-uppercase fw-bold">Tổng thanh toán</small>
+                    <div class="display-4 fw-bold text-success" id="pay-total-display">0 đ</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Khách đưa (VNĐ):</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-money-bill-wave"></i></span>
+                        <input type="number" id="customer-pay-input" class="form-control form-control-lg fw-bold fs-4 text-primary" placeholder="0">
+                    </div>
+                    <div class="mt-2 d-flex gap-2 justify-content-center">
+                        <button class="btn btn-outline-secondary btn-sm quick-pay" data-value="50000">50k</button>
+                        <button class="btn btn-outline-secondary btn-sm quick-pay" data-value="100000">100k</button>
+                        <button class="btn btn-outline-secondary btn-sm quick-pay" data-value="200000">200k</button>
+                        <button class="btn btn-outline-secondary btn-sm quick-pay" data-value="500000">500k</button>
+                        <button class="btn btn-outline-primary btn-sm" id="btn-pay-exact">Đủ tiền</button>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-bold fs-5">Tiền thối lại:</span>
+                    <span class="fw-bold fs-2 text-danger" id="change-due-display">0 đ</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Quay lại</button>
+                <button type="button" class="btn btn-success btn-lg px-4" id="btn-confirm-print">
+                    <i class="fa-solid fa-print"></i> IN HÓA ĐƠN
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="customAlertModal" tabindex="-1" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header text-white" id="alert-header">
+                <h5 class="modal-title" id="alert-title">Thông báo</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <i id="alert-icon" class="fa-solid fa-circle-info fa-3x mb-3 text-primary"></i>
+                <p id="alert-message" class="fw-bold mb-0">Nội dung thông báo...</p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-primary w-50" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="customConfirmModal" tabindex="-1" data-bs-backdrop="static" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="fa-solid fa-circle-question"></i> XÁC NHẬN</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body fs-6" id="confirm-message">
+                Bạn có chắc chắn muốn thực hiện hành động này?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Không</button>
+                <button type="button" class="btn btn-warning fw-bold px-4" id="btn-confirm-yes">Đồng ý</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="customPromptModal" tabindex="-1" data-bs-backdrop="static" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title"><i class="fa-solid fa-user-shield"></i> ADMIN INPUT</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="prompt-message" class="mb-2">Nhập giá trị:</p>
+                <input type="text" id="prompt-input" class="form-control form-control-lg text-center fw-bold" autofocus>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary px-4" id="btn-prompt-submit">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+</div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script src="js/pos_main.js"></script>

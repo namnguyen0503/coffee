@@ -1,54 +1,64 @@
 <?php
 session_start();
+header('Content-Type: application/json; charset=utf-8');
 require_once '../includes/db_connection.php';
 
-// Kiểm tra quyền
-if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'wh-staff' && $_SESSION['role'] !== 'admin')) {
-    die("Không có quyền truy cập");
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // 1. Lấy dữ liệu từ Form
-    $ing_id = intval($_POST['ingredient_id']);
-    $qty_add = floatval($_POST['quantity_add']);
+try {
+    // 1. Nhận dữ liệu JSON từ AJAX
+    $input = json_decode(file_get_contents("php://input"), true);
     
-    // [MỚI] Lấy số tiền (nếu bỏ trống thì coi là 0)
-    $cost = isset($_POST['import_cost']) && $_POST['import_cost'] !== '' ? floatval($_POST['import_cost']) : 0;
-    
-    $note = trim($_POST['note']);
-    $user_id = $_SESSION['user_id'];
-
-    if ($ing_id > 0 && $qty_add > 0) {
-        $mysqli->begin_transaction();
-
-        try {
-            // 2. Cập nhật số lượng tồn kho (Cộng thêm)
-            $stmt = $mysqli->prepare("UPDATE ingredients SET quantity = quantity + ?, last_updated = NOW() WHERE id = ?");
-            $stmt->bind_param("di", $qty_add, $ing_id);
-            if (!$stmt->execute()) throw new Exception("Lỗi update kho: " . $stmt->error);
-            $stmt->close();
-
-            // 3. Ghi log nhập hàng (KÈM THEO GIÁ TIỀN)
-            // Cột 'cost' vừa thêm vào Database
-            $stmt_log = $mysqli->prepare("INSERT INTO inventory_log (ingredient_id, type, quantity, cost, note, user_id, created_at) VALUES (?, 'import', ?, ?, ?, ?, NOW())");
-            
-            // "iddsi" nghĩa là: int, double, double, string, int
-            $stmt_log->bind_param("iddsi", $ing_id, $qty_add, $cost, $note, $user_id);
-            
-            if (!$stmt_log->execute()) throw new Exception("Lỗi ghi log: " . $stmt_log->error);
-            $stmt_log->close();
-
-            $mysqli->commit();
-            
-            // Xong thì quay lại trang chủ kho
-            echo "<script>alert('Nhập kho thành công!'); window.location.href='index.php';</script>";
-
-        } catch (Exception $e) {
-            $mysqli->rollback();
-            echo "<script>alert('CÓ LỖI XẢY RA: " . addslashes($e->getMessage()) . "'); window.history.back();</script>";
-        }
-    } else {
-        echo "<script>alert('Dữ liệu không hợp lệ. Vui lòng kiểm tra số lượng.'); window.history.back();</script>";
+    if (!$input) {
+        throw new Exception("Dữ liệu gửi lên không hợp lệ (Phải là JSON).");
     }
+
+    $ing_id = isset($input['ingredient_id']) ? (int)$input['ingredient_id'] : 0;
+    $qty_add = isset($input['quantity_add']) ? (float)$input['quantity_add'] : 0;
+    $cost = isset($input['import_cost']) ? (float)$input['import_cost'] : 0;
+    $note_input = isset($input['note']) ? trim($input['note']) : '';
+    $user_id = $_SESSION['user_id'] ?? 0;
+
+    // Validate
+    if ($ing_id <= 0) throw new Exception("Chưa chọn nguyên liệu.");
+    if ($qty_add <= 0) throw new Exception("Số lượng nhập phải lớn hơn 0.");
+
+    $mysqli->begin_transaction();
+
+    // 2. Cập nhật số lượng tồn kho
+    $stmt_update = $mysqli->prepare("UPDATE ingredients SET quantity = quantity + ? WHERE id = ?");
+    $stmt_update->bind_param("di", $qty_add, $ing_id);
+    
+    if (!$stmt_update->execute()) {
+        throw new Exception("Lỗi SQL Update: " . $mysqli->error);
+    }
+
+    // 3. Ghi Log nhập kho
+    // Ghép giá nhập vào ghi chú (Vì bảng log có thể chưa có cột price)
+    // Nếu bạn muốn lưu giá nhập, hãy thêm cột 'price' vào bảng inventory_log
+    $full_note = $note_input;
+    if ($cost > 0) {
+        $full_note .= " [Chi phí: " . number_format($cost) . "đ]";
+    }
+
+    // Trong process_import.php, đoạn INSERT phải như này:
+$stmt_log = $mysqli->prepare("INSERT INTO inventory_log (ingredient_id, type, quantity, cost, note, user_id, created_at) VALUES (?, 'import', ?, ?, ?, ?, NOW())");
+$stmt_log->bind_param("iddsi", $ing_id, $qty_add, $cost, $note_input, $user_id);
+    
+    if (!$stmt_log->execute()) {
+        throw new Exception("Lỗi ghi Log.");
+    }
+
+    $mysqli->commit();
+
+    echo json_encode([
+        'success' => true, 
+        'message' => 'Đã nhập kho thành công!'
+    ]);
+
+} catch (Exception $e) {
+    $mysqli->rollback();
+    echo json_encode([
+        'success' => false, 
+        'message' => $e->getMessage()
+    ]);
 }
 ?>

@@ -1,7 +1,7 @@
 <?php
 // Load thư viện PhpSpreadsheet
 require '../vendor/autoload.php'; 
-require '../tinh-nang/db_connection.php';
+require '../../includes/db_connection.php';
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;

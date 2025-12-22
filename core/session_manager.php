@@ -112,10 +112,17 @@ try {
         $stmt_get->execute();
         $session = $stmt_get->get_result()->fetch_assoc();
 
+        // --- [SỬA ĐOẠN NÀY] ---
         if (!$session) {
-            throw new Exception("Không tìm thấy ca làm việc nào đang mở.");
-            
+            // Không tìm thấy ca mở -> Hủy session đăng nhập luôn -> Trả về success để JS chuyển hướng
+            session_destroy(); 
+            echo json_encode([
+                'success' => true, 
+                'message' => 'Đăng xuất thành công (Bạn chưa vào ca).'
+            ]);
+            exit; // Dừng code tại đây
         }
+        // ----------------------
 
         $session_id = $session['id'];
         $start_time = $session['start_time'];

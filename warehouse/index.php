@@ -38,7 +38,9 @@ $result = $mysqli->query($query);
         <a class="navbar-brand text-white fw-bold" href="#"><i class="fa-solid fa-boxes-stacked me-2"></i>KHO HÀNG</a>
         <div class="d-flex align-items-center text-white">
             <span class="me-3"><i class="fa-solid fa-user me-1"></i> <?= $_SESSION['fullname'] ?? 'Thủ kho' ?></span>
-            <a href="../logout.php" class="btn btn-sm btn-outline-light">Đăng xuất</a>
+            <button class="btn btn-sm btn-outline-light" onclick="confirmEndShiftWarehouse()">
+    <i class="fa-solid fa-right-from-bracket me-1"></i> Thoát ca
+</button>
         </div>
     </div>
 </nav>
@@ -276,6 +278,85 @@ $result = $mysqli->query($query);
         modal.show();
     }
 </script>
+<div class="modal fade" id="modalEndShiftWh" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fa-solid fa-door-closed"></i> KẾT THÚC CA & ĐĂNG XUẤT</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-dark text-start">
+                <div class="alert alert-warning">
+                    <i class="fa-solid fa-circle-exclamation"></i> Bạn đang trong ca làm việc. Vui lòng kiểm kê tiền két trước khi đăng xuất.
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Tổng tiền mặt thực tế:</label>
+                    <input type="number" id="wh-end-cash-input" class="form-control form-control-lg" placeholder="Nhập số tiền...">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Ghi chú:</label>
+                    <textarea id="wh-end-note-input" class="form-control" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger px-4" onclick="submitEndShiftWh()">Xác nhận Đăng xuất</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    // 1. Kiểm tra trạng thái ca khi bấm nút Thoát ca
+function confirmEndShiftWarehouse() {
+    fetch('../core/session_manager.php?action=check_status')
+    .then(res => res.json())
+    .then(data => {
+        if (data.success && data.is_open) {
+            // Nếu đang mở ca -> Hiện modal bắt chốt tiền
+            const modal = new bootstrap.Modal(document.getElementById('modalEndShiftWh'));
+            modal.show();
+        } else {
+            // Nếu không có ca (hoặc đã chốt) -> Cho logout thẳng
+            window.location.href = '../logout.php';
+        }
+    })
+    .catch(err => {
+        console.error("Lỗi kết nối:", err);
+        window.location.href = '../logout.php'; // Fail-safe: Vẫn cho logout nếu lỗi API
+    });
+}
 
+// 2. Gửi dữ liệu chốt ca
+function submitEndShiftWh() {
+    const cashInput = document.getElementById('wh-end-cash-input');
+    const noteInput = document.getElementById('wh-end-note-input');
+
+    if (!cashInput.value || cashInput.value === "") {
+        alert("Vui lòng nhập số tiền mặt thực tế!");
+        return;
+    }
+
+    if (!confirm("Xác nhận chốt ca và đăng xuất?")) return;
+
+    fetch('../core/session_manager.php?action=end_shift', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            end_cash: cashInput.value, 
+            note: noteInput.value 
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            window.location.href = '../login.php';
+        } else {
+            alert("Lỗi: " + data.message);
+        }
+    })
+    .catch(err => alert("Lỗi kết nối máy chủ!"));
+}
+</script>
 </body>
 </html>

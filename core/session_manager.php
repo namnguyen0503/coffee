@@ -98,15 +98,14 @@ try {
         }
     }
 
-    // 3. Thoát ca (End Shift)
+    // 3. Thoát ca (End Shift) - PHIÊN BẢN LOGOS: CHỐT CHẶT DÒNG TIỀN
     elseif ($action === 'end_shift') {
         $input = json_decode(file_get_contents("php://input"), true);
-        $end_cash = $input['end_cash'] ?? 0;
+        $end_cash = isset($input['end_cash']) ? (float)$input['end_cash'] : 0; // Số tiền thực tế nhân viên đếm được
         $note = $input['note'] ?? '';
 
-        // Tính tổng doanh thu trong phiên này (Query từ bảng orders)
-        // Lấy session ID đang mở
-        $stmt_get = $mysqli->prepare("SELECT id, start_time FROM work_sessions WHERE user_id = ? AND status = 'open'");
+        // 1. Tìm ca làm việc đang mở của User này
+        $stmt_get = $mysqli->prepare("SELECT id, start_time, start_cash FROM work_sessions WHERE user_id = ? AND status = 'open'");
         $stmt_get->bind_param("i", $user_id);
         $stmt_get->execute();
         $session = $stmt_get->get_result()->fetch_assoc();
@@ -117,24 +116,51 @@ try {
 
         $session_id = $session['id'];
         $start_time = $session['start_time'];
+        $start_cash = (float)$session['start_cash'];
 
-        // Tính doanh thu từ lúc start_time đến giờ
-        $stmt_sales = $mysqli->prepare("SELECT SUM(total_price) as total FROM orders WHERE user_id = ? AND order_date >= ? AND status = 'paid'");
-        $stmt_sales->bind_param("is", $user_id, $start_time);
-        $stmt_sales->execute();
-        $sales_data = $stmt_sales->get_result()->fetch_assoc();
-        $total_sales = $sales_data['total'] ?? 0;
+        // 2. Tính TỔNG DOANH THU (Để quản lý biết năng suất bán hàng)
+        $stmt_total = $mysqli->prepare("SELECT SUM(total_price) as total FROM orders WHERE session_id = ? AND status = 'paid'");
+        $stmt_total->bind_param("i", $session_id);
+        $stmt_total->execute();
+        $total_sales = $stmt_total->get_result()->fetch_assoc()['total'] ?? 0;
 
-        // Update đóng ca
+        // 3. Tính DOANH THU TIỀN MẶT (Để đối soát két sắt)
+        $stmt_cash = $mysqli->prepare("SELECT SUM(total_price) as total_cash FROM orders WHERE session_id = ? AND status = 'paid' AND payment_method = 'cash'");
+        $stmt_cash->bind_param("i", $session_id);
+        $stmt_cash->execute();
+        $cash_revenue = $stmt_cash->get_result()->fetch_assoc()['total_cash'] ?? 0;
+
+        // 4. Tính toán số tiền LỆCH KÉT
+        // Tiền mặt lý thuyết phải có = Vốn đầu ca + Doanh thu Tiền mặt
+        $expected_cash = $start_cash + $cash_revenue;
+        $difference = $end_cash - $expected_cash;
+
+        // 5. Ghi chú chi tiết tự động vào Database (Dành cho Admin soi)
+        $transfer_revenue = $total_sales - $cash_revenue;
+        $auto_note = "[TỔNG KẾT CA]: " . 
+                     "Doanh thu TM: " . number_format($cash_revenue) . "đ | " .
+                     "Chuyển khoản: " . number_format($transfer_revenue) . "đ | " .
+                     "Vốn đầu: " . number_format($start_cash) . "đ | " .
+                     "Kỳ vọng két: " . number_format($expected_cash) . "đ | " .
+                     "Thực tế: " . number_format($end_cash) . "đ | " .
+                     "LỆCH: " . ($difference >= 0 ? "+" : "") . number_format($difference) . "đ. " . 
+                     ($note ? " - Ghi chú thêm: " : "") . $note;
+
+        // 6. Cập nhật đóng ca
         $stmt_update = $mysqli->prepare("UPDATE work_sessions SET end_time = NOW(), end_cash = ?, total_sales = ?, note = ?, status = 'closed' WHERE id = ?");
-        $stmt_update->bind_param("ddsi", $end_cash, $total_sales, $note, $session_id);
+        $stmt_update->bind_param("ddsi", $end_cash, $total_sales, $auto_note, $session_id);
         
         if ($stmt_update->execute()) {
-            // Logout luôn cho an toàn
+            // Logout để dọn sạch dấu vết phiên làm việc
             session_destroy();
-            echo json_encode(['success' => true, 'message' => 'Đã chốt ca thành công! Doanh thu: ' . number_format($total_sales)]);
+            
+            $msg = "Đã chốt ca thành công!\n";
+            $msg .= "Tổng doanh thu: " . number_format($total_sales) . "đ\n";
+            $msg .= "Chênh lệch két: " . number_format($difference) . "đ";
+            
+            echo json_encode(['success' => true, 'message' => $msg]);
         } else {
-            throw new Exception("Lỗi đóng ca.");
+            throw new Exception("Lỗi cập nhật Database khi đóng ca.");
         }
     }
 

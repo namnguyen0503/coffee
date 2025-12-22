@@ -349,33 +349,60 @@ while ($row = $recipe_result->fetch_assoc()) {
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="text-center mb-3">
-                    <small class="text-muted text-uppercase fw-bold">Tổng thanh toán</small>
-                    <div class="display-4 fw-bold text-success" id="pay-total-display">0 đ</div>
-                </div>
+    <div class="text-center mb-3">
+        <small class="text-muted text-uppercase fw-bold">Tổng thanh toán</small>
+        <div class="display-4 fw-bold text-success" id="pay-total-display">0 đ</div>
+    </div>
 
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Khách đưa (VNĐ):</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fa-solid fa-money-bill-wave"></i></span>
-                        <input type="number" id="customer-pay-input" class="form-control form-control-lg fw-bold fs-4 text-primary" placeholder="0">
-                    </div>
-                    <div class="mt-2 d-flex gap-2 justify-content-center">
-                        <button class="btn btn-outline-secondary btn-sm quick-pay" data-value="50000">50k</button>
-                        <button class="btn btn-outline-secondary btn-sm quick-pay" data-value="100000">100k</button>
-                        <button class="btn btn-outline-secondary btn-sm quick-pay" data-value="200000">200k</button>
-                        <button class="btn btn-outline-secondary btn-sm quick-pay" data-value="500000">500k</button>
-                        <button class="btn btn-outline-primary btn-sm" id="btn-pay-exact">Đủ tiền</button>
-                    </div>
-                </div>
+    <div class="mb-3">
+        <label class="form-label fw-bold">Hình thức thanh toán:</label>
+        <div class="btn-group w-100" role="group">
+            <input type="radio" class="btn-check" name="paymentMethod" id="pm-cash" value="cash" checked onchange="togglePaymentMethod('cash')">
+            <label class="btn btn-outline-success p-3 fw-bold" for="pm-cash">
+                <i class="fa-solid fa-money-bill-wave"></i> Tiền mặt
+            </label>
 
-                <hr>
+            <input type="radio" class="btn-check" name="paymentMethod" id="pm-transfer" value="transfer" onchange="togglePaymentMethod('transfer')">
+            <label class="btn btn-outline-primary p-3 fw-bold" for="pm-transfer">
+                <i class="fa-solid fa-qrcode"></i> Chuyển khoản
+            </label>
+        </div>
+    </div>
 
-                <div class="d-flex justify-content-between align-items-center">
-                    <span class="fw-bold fs-5">Tiền thối lại:</span>
-                    <span class="fw-bold fs-2 text-danger" id="change-due-display">0 đ</span>
-                </div>
+    <div id="cash-payment-section">
+        <div class="mb-3">
+            <label class="form-label fw-bold">Khách đưa:</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="fa-solid fa-hand-holding-dollar"></i></span>
+                <input type="number" id="customer-pay-input" class="form-control form-control-lg fw-bold fs-4 text-primary" placeholder="0">
             </div>
+            <div class="mt-2 d-flex gap-2 justify-content-center">
+                <button class="btn btn-outline-secondary btn-sm quick-pay" data-value="50000">50k</button>
+                <button class="btn btn-outline-secondary btn-sm quick-pay" data-value="100000">100k</button>
+                <button class="btn btn-outline-secondary btn-sm quick-pay" data-value="200000">200k</button>
+                <button class="btn btn-outline-secondary btn-sm quick-pay" data-value="500000">500k</button>
+                <button class="btn btn-outline-primary btn-sm" id="btn-pay-exact">Đủ tiền</button>
+            </div>
+        </div>
+        <hr>
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-bold fs-5">Tiền thối lại:</span>
+            <span class="fw-bold fs-2 text-danger" id="change-due-display">0 đ</span>
+        </div>
+    </div>
+
+    <div id="transfer-payment-section" style="display: none;" class="text-center">
+        <div class="alert alert-primary">
+            <i class="fa-solid fa-volume-high"></i> Vui lòng đợi loa thông báo: 
+            <b id="transfer-amount-hint" class="fs-5">...</b>
+        </div>
+        <img src="https://img.vietqr.io/image/MB-0987654321-compact2.png" 
+             class="img-fluid border p-2 rounded shadow-sm" 
+             style="max-height: 200px;" 
+             alt="QR Code">
+        <p class="text-muted small mt-2">Chờ xác nhận từ ngân hàng...</p>
+    </div>
+</div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Quay lại</button>
                 <button type="button" class="btn btn-success btn-lg px-4" id="btn-confirm-print">

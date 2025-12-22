@@ -586,7 +586,8 @@ function handleCheckoutInternal() {
 
         // Lấy mã voucher hiện tại để gửi đi và hiển thị
         const voucherCodeInput = document.getElementById('voucher-code').value.trim().toUpperCase();
-
+        // Lấy phương thức thanh toán đang chọn
+        const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
         const itemsToSend = cartItems.map(item => ({
             product_id: item.id,
             quantity: item.quantity,
@@ -594,11 +595,14 @@ function handleCheckoutInternal() {
         }));
 
         const checkoutData = {
-            total_amount: total, 
-            items: itemsToSend,
-            voucher_code: voucherCodeInput, // Gửi mã
-            discount_percent: currentDiscountPercent // Gửi % (để admin verify)
-        };
+    total_amount: total, 
+    items: itemsToSend,
+    voucher_code: voucherCodeInput,
+    discount_percent: currentDiscountPercent,
+    
+    // THÊM DÒNG NÀY:
+    payment_method: paymentMethod 
+};
 
         // 3. Gửi Request
         fetch('../core/order_processor.php', {
@@ -1172,3 +1176,29 @@ document.getElementById('btn-prompt-submit')?.addEventListener('click', function
     const modal = bootstrap.Modal.getInstance(document.getElementById('customPromptModal'));
     modal.hide();
 });
+
+// Hàm chuyển đổi giao diện Tiền mặt / Chuyển khoản
+function togglePaymentMethod(method) {
+    const cashSection = document.getElementById('cash-payment-section');
+    const transferSection = document.getElementById('transfer-payment-section');
+    const confirmBtn = document.getElementById('btn-confirm-print');
+
+    if (method === 'transfer') {
+        cashSection.style.display = 'none';
+        transferSection.style.display = 'block';
+        
+        // Khi chọn CK, mặc định là khách đã trả đủ
+        document.getElementById('transfer-amount-hint').textContent = finalPaymentAmount.toLocaleString('vi-VN') + " đ";
+        
+        // Cho phép in luôn (không cần tính tiền thừa)
+        confirmBtn.disabled = false; 
+    } else {
+        cashSection.style.display = 'block';
+        transferSection.style.display = 'none';
+        
+        // Reset lại tính toán tiền mặt
+        document.getElementById('customer-pay-input').value = '';
+        document.getElementById('change-due-display').textContent = '0 đ';
+        confirmBtn.disabled = true; // Phải nhập tiền mới cho in
+    }
+}

@@ -18,7 +18,7 @@ try {
     // --- [XỬ LÝ VOUCHER (SERVER SIDE)] ---
     $voucher_code = isset($input['voucher_code']) ? strtoupper(trim($input['voucher_code'])) : '';
     $requested_percent = isset($input['discount_percent']) ? (float)$input['discount_percent'] : 0;
-    
+    $payment_method = isset($data['payment_method']) ? $data['payment_method'] : 'cash';
     $applied_discount_percent = 0; // Mặc định không giảm
 
     // A. LOGIC VOUCHER ADMIN (ADMINVIP)
@@ -87,11 +87,10 @@ try {
     $mysqli->begin_transaction();
 
     // Insert Order (Lưu cả mã voucher và % vào)
-    $sql_order = "INSERT INTO orders (user_id, total_price, final_amount, discount_percent, voucher_code, order_date, status, session_id) VALUES (?, ?, ?, ?, ?, NOW(), 'paid', ?)";
+    $stmt = $mysqli->prepare("INSERT INTO orders (user_id, session_id, order_date, total_price, status, payment_method) VALUES (?, ?, NOW(), ?, 'paid', ?)");
     $stmt_order = $mysqli->prepare($sql_order);
     // d: double (cho tiền và percent)
-    $stmt_order->bind_param("idddsi", $_SESSION['user_id'], $server_total_amount, $final_amount, $applied_discount_percent, $voucher_code, $current_session_id);
-    
+    $stmt->bind_param("iids", $user_id, $session_id, $final_amount, $payment_method);    
     if (!$stmt_order->execute()) throw new Exception("Lỗi tạo đơn: " . $stmt_order->error);
     $new_order_id = $mysqli->insert_id;
 

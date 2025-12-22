@@ -76,7 +76,22 @@ $result = $mysqli->query($query);
                         <td>#<?= $row['id'] ?></td>
                         <td><?= date('d/m/Y H:i', strtotime($row['order_date'])) ?></td>
                         <td class="fw-bold"><?= number_format($row['total_price']) ?>đ</td>
-                        <td><span class="badge bg-success">Đã thanh toán</span></td>
+                        <td>
+                            <?php
+                            switch ($row['status']) {
+                                case 'not_paid':
+                                    echo '<span class="badge bg-warning text-dark">Chờ xử lý</span>';
+                                    break;
+                                case 'paid':
+                                    echo '<span class="badge bg-success">Hoàn thành</span>';
+                                    break;
+                                case 'canceled':
+                                    echo '<span class="badge bg-danger">Đã hủy</span>';
+                                    break;
+                                default:
+                                    echo '<span class="badge bg-secondary">Không xác định</span>';
+                            }
+                            ?>
                         <td>
                             <td class="text-center">
     <button class="btn btn-sm btn-outline-primary btn-view-detail" 

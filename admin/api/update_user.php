@@ -1,5 +1,6 @@
 <?php
-require '../tinh-nang/db_connection.php';$conn = connect_db();$conn = connect_db();
+require '../../includes/db_connection.php';
+$conn = connect_db();
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {

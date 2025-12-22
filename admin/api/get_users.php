@@ -1,5 +1,5 @@
 <?php
-require '../tinh-nang/db_connection.php';
+require '../../includes/db_connection.php';
 $conn = connect_db();
 
 // 1. Nhận từ khóa tìm kiếm

@@ -1,3 +1,10 @@
+<?php
+session_start();
+    if (!isset($_SESSION['role'])) {
+    header("Location: ../login.php?error=no_permission");
+    exit();
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>

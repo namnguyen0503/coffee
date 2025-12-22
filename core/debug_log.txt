@@ -1,0 +1,11 @@
+[2025-12-22 11:19:46] User 1 trying to END shift.
+[2025-12-22 11:19:46] Found Session ID: 6
+[2025-12-22 11:19:46] Total Sales: 0
+[2025-12-22 11:19:46] Cash Revenue: 0
+[2025-12-22 11:19:46] Shift Closed Successfully.
+[2025-12-22 11:27:28] User 1 trying to END shift.
+[2025-12-22 11:27:28] EXCEPTION CAUGHT: Không tìm thấy ca làm việc đang mở (Hoặc đã chốt rồi).
+[2025-12-22 11:27:28] Last SQL attempted: SELECT id, start_time, start_cash FROM work_sessions WHERE user_id = ? AND status = 'open'
+[2025-12-22 11:28:05] User 1 trying to END shift.
+[2025-12-22 11:28:05] EXCEPTION CAUGHT: Không tìm thấy ca làm việc đang mở (Hoặc đã chốt rồi).
+[2025-12-22 11:28:05] Last SQL attempted: SELECT id, start_time, start_cash FROM work_sessions WHERE user_id = ? AND status = 'open'

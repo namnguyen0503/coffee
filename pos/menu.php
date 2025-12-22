@@ -10,7 +10,6 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 
-
 // 2. Lấy danh mục
 $categories = $mysqli->query("SELECT * FROM categories");
 

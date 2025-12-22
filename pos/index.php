@@ -123,7 +123,7 @@ while($row = $recent_orders->fetch_assoc()):
         <?php if ($row['status'] == 'paid'): ?>
 <span class="badge bg-success">Đã trả</span>
         <?php elseif ($row['status'] == 'canceled'): ?>
-<span class="badge bg-secondary">Đã hủy</span>
+<span class="badge bg-danger">Đã hủy</span>
         <?php else: ?>
 <span class="badge bg-warning text-dark">Đang xử lý</span>
         <?php endif; ?>

@@ -14,7 +14,10 @@ try {
     // 2. Nhận dữ liệu từ Client
     $input = json_decode(file_get_contents("php://input"), true);
     if (!$input || empty($input['items'])) throw new Exception("Giỏ hàng rỗng.");
-
+    // --- [THÊM DÒNG NÀY] ---
+    // Mặc định là 'cash' nếu không có dữ liệu gửi lên
+    $payment_method = isset($input['payment_method']) ? $input['payment_method'] : 'cash'; 
+    // -----------------------
     // --- [XỬ LÝ VOUCHER (SERVER SIDE)] ---
     $voucher_code = isset($input['voucher_code']) ? strtoupper(trim($input['voucher_code'])) : '';
     $requested_percent = isset($input['discount_percent']) ? (float)$input['discount_percent'] : 0;
@@ -83,18 +86,33 @@ try {
     $discount_amount = $server_total_amount * ($applied_discount_percent / 100);
     $final_amount = $server_total_amount - $discount_amount;
 
+    // ... (Phần trên giữ nguyên) ...
+
     // 5. Lưu vào DB
     $mysqli->begin_transaction();
 
-    // Insert Order (Lưu cả mã voucher và % vào)
-    $sql_order = "INSERT INTO orders (user_id, total_price, final_amount, discount_percent, voucher_code, order_date, status, session_id) VALUES (?, ?, ?, ?, ?, NOW(), 'paid', ?)";
+    // --- [ĐOẠN CODE ĐÃ SỬA] ---
+    $sql_order = "INSERT INTO orders (user_id, total_price, final_amount, discount_percent, voucher_code, payment_method, order_date, status, session_id) VALUES (?, ?, ?, ?, ?, ?, NOW(), 'paid', ?)";
     $stmt_order = $mysqli->prepare($sql_order);
-    // d: double (cho tiền và percent)
-    $stmt_order->bind_param("idddsi", $_SESSION['user_id'], $server_total_amount, $final_amount, $applied_discount_percent, $voucher_code, $current_session_id);
+    
+    // Chú ý: "idddssi" tương ứng với các kiểu dữ liệu bên dưới
+    $stmt_order->bind_param("idddssi", 
+        $_SESSION['user_id'], 
+        $server_total_amount, 
+        $final_amount, 
+        $applied_discount_percent, 
+        $voucher_code,
+        $payment_method,      // <-- BIẾN MỚI
+        $current_session_id
+    );
+    // --------------------------
     
     if (!$stmt_order->execute()) throw new Exception("Lỗi tạo đơn: " . $stmt_order->error);
     $new_order_id = $mysqli->insert_id;
 
+    // ... (Phần dưới giữ nguyên) ...
+
+    
     // Insert Items & Trừ kho (Giữ nguyên logic cũ)
     $sql_item = "INSERT INTO order_items (order_id, product_id, quantity, note) VALUES (?, ?, ?, ?)";
     $stmt_item = $mysqli->prepare($sql_item);

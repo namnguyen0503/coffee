@@ -8,6 +8,7 @@ $user_id = $_SESSION['user_id'] ?? 0;
 
 if ($user_id == 0) {
     echo json_encode(['success' => false, 'message' => 'Chưa đăng nhập']);
+    require_once '../logout.php';
     exit;
 }
 
@@ -113,6 +114,7 @@ try {
 
         if (!$session) {
             throw new Exception("Không tìm thấy ca làm việc nào đang mở.");
+            
         }
 
         $session_id = $session['id'];
@@ -140,5 +142,6 @@ try {
 
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    require_once '../logout.php';
 }
 ?>

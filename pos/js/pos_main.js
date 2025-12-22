@@ -1,4 +1,13 @@
 /* =============================================================
+   CẤU HÌNH NGÂN HÀNG (VIETQR)
+   ============================================================= */
+const BANK_CONFIG = {
+    BANK_ID: 'TCB',       // Mã ngân hàng (MB, VCB, ACB, TPB...)
+    ACCOUNT_NO: '258905038888', // Số tài khoản của bạn
+    TEMPLATE: 'compact', // Giao diện QR: 'compact', 'qr_only', 'print'
+    ACCOUNT_NAME: 'NGUYEN DANH NHAT NAM' // Tên chủ tài khoản (để hiển thị cho chắc)
+};
+/* =============================================================
    1. KHỞI TẠO BIẾN & DATA
    ============================================================= */
 const order_id = document.getElementById('order-id');
@@ -581,28 +590,30 @@ function handleCheckoutInternal() {
     }
 
     // 2. Xác nhận thanh toán
-        // Tính tổng tiền (Client side estimate)
-        const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    // Tính tổng tiền (Client side estimate)
+    const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-        // Lấy mã voucher hiện tại để gửi đi và hiển thị
-        const voucherCodeInput = document.getElementById('voucher-code').value.trim().toUpperCase();
-        // Lấy phương thức thanh toán đang chọn
-        const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
-        const itemsToSend = cartItems.map(item => ({
-            product_id: item.id,
-            quantity: item.quantity,
-            note: item.note || '' 
-        }));
+    // Lấy mã voucher (nếu chưa có ô này trong HTML thì phải thêm dấu ? vào trước .value để tránh lỗi nốt)
+    const voucherEl = document.getElementById('voucher-code');
+    const voucherCodeInput = voucherEl ? voucherEl.value.trim().toUpperCase() : '';
 
-        const checkoutData = {
-    total_amount: total, 
-    items: itemsToSend,
-    voucher_code: voucherCodeInput,
-    discount_percent: currentDiscountPercent,
-    
-    // THÊM DÒNG NÀY:
-    payment_method: paymentMethod 
-};
+    // --- ĐÃ XÓA DÒNG paymentMethod GÂY LỖI TẠI ĐÂY ---
+
+    const itemsToSend = cartItems.map(item => ({
+        product_id: item.id,
+        quantity: item.quantity,
+        note: item.note || '' 
+    }));
+
+    const checkoutData = {
+        total_amount: total, 
+        items: itemsToSend,
+        voucher_code: voucherCodeInput,
+        discount_percent: currentDiscountPercent,
+        
+        // Code của bạn đã dùng biến toàn cục này rồi, nên dòng paymentMethod bị xóa ở trên là thừa
+        payment_method: currentPaymentMethod 
+    };
 
         // 3. Gửi Request
         fetch('../core/order_processor.php', {
@@ -1008,7 +1019,7 @@ function checkVoucher() {
    ============================================================= */
 
 // Biến lưu tổng tiền cuối cùng (sau khi trừ voucher)
-let finalPaymentAmount = 0; 
+
 
 function openPaymentModal() {
     // 1. Kiểm tra giỏ hàng trước
@@ -1202,3 +1213,129 @@ function togglePaymentMethod(method) {
         confirmBtn.disabled = true; // Phải nhập tiền mới cho in
     }
 }
+
+/* =============================================================
+   LOGIC THANH TOÁN (PAYMENT)
+   ============================================================= */
+let currentPaymentMethod = 'cash'; // Mặc định là tiền mặt
+let finalPaymentAmount = 0; // Biến toàn cục lưu số tiền cần trả
+
+// 1. Hàm mở Modal Thanh toán
+function openPaymentModal() {
+    if (cartItems.length === 0) {
+        showCustomAlert("Giỏ hàng rỗng!", "warning");
+        return;
+    }
+
+    // Tính tiền
+    const totalOriginal = cartItems.reduce((sum, item) => sum + (Number(item.price) * Number(item.quantity)), 0);
+    const discountAmount = totalOriginal * (currentDiscountPercent / 100);
+    finalPaymentAmount = totalOriginal - discountAmount;
+
+    // Reset UI Modal
+    document.getElementById('pay-total-display').textContent = finalPaymentAmount.toLocaleString('vi-VN') + ' đ';
+    document.getElementById('customer-pay-input').value = '';
+    document.getElementById('change-due-display').textContent = '0 đ';
+    
+    // Reset về Tab Tiền mặt mặc định
+    const cashTabBtn = document.querySelector('#method-cash');
+    const cashTabInstance = new bootstrap.Tab(cashTabBtn);
+    cashTabInstance.show();
+    setPaymentMethod('cash');
+
+    const modal = new bootstrap.Modal(document.getElementById('modalPayment'));
+    modal.show();
+
+    // Auto focus ô nhập tiền sau 0.5s
+    setTimeout(() => {
+        document.getElementById('customer-pay-input').focus();
+    }, 500);
+}
+
+// 2. Hàm chuyển đổi phương thức (Cash <-> Transfer)
+function setPaymentMethod(method) {
+    currentPaymentMethod = method;
+    const btnConfirm = document.getElementById('btn-confirm-payment');
+
+    if (method === 'transfer') {
+        // Nếu chọn chuyển khoản -> Tạo QR ngay
+        generateVietQR(finalPaymentAmount);
+        btnConfirm.disabled = false; // Chuyển khoản thì cho bấm luôn (nhân viên tự check)
+    } else {
+        // Nếu chọn tiền mặt -> Reset validation
+        calculateChange(0); // Tính lại tiền thừa
+    }
+}
+
+// 3. Hàm tạo ảnh VietQR
+function generateVietQR(amount) {
+    const imgEl = document.getElementById('vietqr-image');
+    const loadEl = document.getElementById('qr-loading');
+    const infoText = document.getElementById('bank-info-text');
+
+    // Ẩn ảnh, hiện loading
+    imgEl.style.display = 'none';
+    loadEl.classList.remove('d-none');
+
+    // Nội dung chuyển khoản: "Ban 1" (Ví dụ, nếu có số bàn thì thêm vào, ở đây demo dùng mã đơn giả định)
+    // Thực tế nên lấy Order ID nếu có, hoặc Time
+    const memo = "POS " + new Date().getHours() + "h" + new Date().getMinutes(); 
+
+    // Tạo link API VietQR (QuickLink)
+    // Format: https://img.vietqr.io/image/<BANK_ID>-<ACCOUNT_NO>-<TEMPLATE>.png?amount=<AMOUNT>&addInfo=<CONTENT>&accountName=<NAME>
+    const qrUrl = `https://img.vietqr.io/image/${BANK_CONFIG.BANK_ID}-${BANK_CONFIG.ACCOUNT_NO}-${BANK_CONFIG.TEMPLATE}.png?amount=${amount}&addInfo=${encodeURIComponent(memo)}&accountName=${encodeURIComponent(BANK_CONFIG.ACCOUNT_NAME)}`;
+
+    // Set src cho ảnh
+    imgEl.src = qrUrl;
+    infoText.textContent = `${BANK_CONFIG.BANK_ID} - ${BANK_CONFIG.ACCOUNT_NO}`;
+
+    // Khi ảnh tải xong
+    imgEl.onload = function() {
+        loadEl.classList.add('d-none');
+        imgEl.style.display = 'inline-block';
+    };
+}
+
+// 4. Logic tính tiền thừa (Như cũ)
+document.getElementById('customer-pay-input')?.addEventListener('input', (e) => calculateChange(Number(e.target.value)));
+
+document.querySelectorAll('.quick-pay').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const val = Number(this.dataset.value);
+        document.getElementById('customer-pay-input').value = val;
+        calculateChange(val);
+    });
+});
+
+document.getElementById('btn-pay-exact')?.addEventListener('click', function() {
+    const exact = finalPaymentAmount;
+    document.getElementById('customer-pay-input').value = exact;
+    calculateChange(exact);
+});
+
+function calculateChange(customerGive) {
+    const change = customerGive - finalPaymentAmount;
+    const changeDisplay = document.getElementById('change-due-display');
+    const btnConfirm = document.getElementById('btn-confirm-payment');
+
+    if (change >= 0) {
+        changeDisplay.textContent = change.toLocaleString('vi-VN') + ' đ';
+        changeDisplay.className = 'fw-bold fs-1 text-success';
+        btnConfirm.disabled = false;
+    } else {
+        changeDisplay.textContent = "Thiếu " + Math.abs(change).toLocaleString('vi-VN') + " đ";
+        changeDisplay.className = 'fw-bold fs-3 text-danger';
+        btnConfirm.disabled = true; // Thiếu tiền không cho in
+    }
+}
+
+// 5. Nút Xác Nhận Thanh Toán
+document.getElementById('btn-confirm-payment')?.addEventListener('click', function() {
+    // Tắt modal
+    const modalEl = document.getElementById('modalPayment');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    modal.hide();
+
+    // Gọi hàm xử lý đơn hàng (Gửi payment_method xuống)
+    handleCheckoutInternal(); 
+});

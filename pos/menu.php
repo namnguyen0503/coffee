@@ -340,73 +340,72 @@ while ($row = $recipe_result->fetch_assoc()) {
         </div>
     </div>
 </div>
-
 <div class="modal fade" id="modalPayment" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+    <div class="modal-dialog modal-dialog-centered modal-lg"> <div class="modal-content">
             <div class="modal-header bg-success text-white">
-                <h5 class="modal-title"><i class="fa-solid fa-cash-register"></i> XÁC NHẬN THANH TOÁN</h5>
+                <h5 class="modal-title"><i class="fa-solid fa-cash-register"></i> THANH TOÁN ĐƠN HÀNG</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-    <div class="text-center mb-3">
-        <small class="text-muted text-uppercase fw-bold">Tổng thanh toán</small>
-        <div class="display-4 fw-bold text-success" id="pay-total-display">0 đ</div>
-    </div>
+            <div class="modal-body p-0">
+                <div class="row g-0 h-100">
+                    <div class="col-md-4 bg-light border-end">
+                        <div class="list-group list-group-flush pt-3" id="payment-methods" role="tablist">
+                            <a class="list-group-item list-group-item-action active py-3" id="method-cash" data-bs-toggle="list" href="#tab-cash" role="tab" onclick="setPaymentMethod('cash')">
+                                <i class="fa-solid fa-money-bill-1 me-2 text-success"></i> Tiền mặt (Cash)
+                            </a>
+                            <a class="list-group-item list-group-item-action py-3" id="method-transfer" data-bs-toggle="list" href="#tab-transfer" role="tab" onclick="setPaymentMethod('transfer')">
+                                <i class="fa-solid fa-qrcode me-2 text-primary"></i> Chuyển khoản (QR)
+                            </a>
+                        </div>
+                        <div class="p-3 mt-auto text-center">
+                            <small class="text-muted fw-bold">TỔNG THANH TOÁN</small>
+                            <div class="display-6 fw-bold text-danger" id="pay-total-display">0 đ</div>
+                        </div>
+                    </div>
 
-    <div class="mb-3">
-        <label class="form-label fw-bold">Hình thức thanh toán:</label>
-        <div class="btn-group w-100" role="group">
-            <input type="radio" class="btn-check" name="paymentMethod" id="pm-cash" value="cash" checked onchange="togglePaymentMethod('cash')">
-            <label class="btn btn-outline-success p-3 fw-bold" for="pm-cash">
-                <i class="fa-solid fa-money-bill-wave"></i> Tiền mặt
-            </label>
+                    <div class="col-md-8">
+                        <div class="tab-content p-4 h-100">
+                            
+                            <div class="tab-pane fade show active" id="tab-cash" role="tabpanel">
+                                <label class="form-label fw-bold">Khách đưa:</label>
+                                <div class="input-group mb-3">
+                                    <input type="text" id="customer-pay-input" class="form-control form-control-lg fw-bold fs-3 text-primary" placeholder="0">
+                                    <span class="input-group-text">đ</span>
+                                </div>
+                                
+                                <div class="d-flex gap-2 flex-wrap mb-4">
+                                    <button class="btn btn-outline-secondary btn-sm quick-pay" data-value="50000">50k</button>
+                                    <button class="btn btn-outline-secondary btn-sm quick-pay" data-value="100000">100k</button>
+                                    <button class="btn btn-outline-secondary btn-sm quick-pay" data-value="200000">200k</button>
+                                    <button class="btn btn-outline-secondary btn-sm quick-pay" data-value="500000">500k</button>
+                                    <button class="btn btn-outline-primary btn-sm" id="btn-pay-exact">Đủ tiền</button>
+                                </div>
 
-            <input type="radio" class="btn-check" name="paymentMethod" id="pm-transfer" value="transfer" onchange="togglePaymentMethod('transfer')">
-            <label class="btn btn-outline-primary p-3 fw-bold" for="pm-transfer">
-                <i class="fa-solid fa-qrcode"></i> Chuyển khoản
-            </label>
-        </div>
-    </div>
+                                <div class="alert alert-light border text-center">
+                                    <span>Tiền thối lại:</span>
+                                    <div class="fw-bold fs-1 text-success" id="change-due-display">0 đ</div>
+                                </div>
+                            </div>
 
-    <div id="cash-payment-section">
-        <div class="mb-3">
-            <label class="form-label fw-bold">Khách đưa:</label>
-            <div class="input-group">
-                <span class="input-group-text"><i class="fa-solid fa-hand-holding-dollar"></i></span>
-                <input type="number" id="customer-pay-input" class="form-control form-control-lg fw-bold fs-4 text-primary" placeholder="0">
+                            <div class="tab-pane fade text-center" id="tab-transfer" role="tabpanel">
+                                <div id="qr-loading" class="d-none text-muted my-5">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                    <p class="mt-2">Đang tạo mã QR...</p>
+                                </div>
+                                <img id="vietqr-image" src="" class="img-fluid border rounded shadow-sm mb-2" style="max-height: 250px; display:none;">
+                                <div class="mt-2">
+                                    <p class="mb-1 fw-bold text-primary" id="bank-info-text"></p>
+                                    <small class="text-muted fst-italic">Vui lòng kiểm tra điện thoại khi nhận được tiền</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="mt-2 d-flex gap-2 justify-content-center">
-                <button class="btn btn-outline-secondary btn-sm quick-pay" data-value="50000">50k</button>
-                <button class="btn btn-outline-secondary btn-sm quick-pay" data-value="100000">100k</button>
-                <button class="btn btn-outline-secondary btn-sm quick-pay" data-value="200000">200k</button>
-                <button class="btn btn-outline-secondary btn-sm quick-pay" data-value="500000">500k</button>
-                <button class="btn btn-outline-primary btn-sm" id="btn-pay-exact">Đủ tiền</button>
-            </div>
-        </div>
-        <hr>
-        <div class="d-flex justify-content-between align-items-center">
-            <span class="fw-bold fs-5">Tiền thối lại:</span>
-            <span class="fw-bold fs-2 text-danger" id="change-due-display">0 đ</span>
-        </div>
-    </div>
-
-    <div id="transfer-payment-section" style="display: none;" class="text-center">
-        <div class="alert alert-primary">
-            <i class="fa-solid fa-volume-high"></i> Vui lòng đợi loa thông báo: 
-            <b id="transfer-amount-hint" class="fs-5">...</b>
-        </div>
-        <img src="https://img.vietqr.io/image/MB-0987654321-compact2.png" 
-             class="img-fluid border p-2 rounded shadow-sm" 
-             style="max-height: 200px;" 
-             alt="QR Code">
-        <p class="text-muted small mt-2">Chờ xác nhận từ ngân hàng...</p>
-    </div>
-</div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Quay lại</button>
-                <button type="button" class="btn btn-success btn-lg px-4" id="btn-confirm-print">
-                    <i class="fa-solid fa-print"></i> IN HÓA ĐƠN
+            <div class="modal-footer bg-white">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-success btn-lg px-5 fw-bold" id="btn-confirm-payment">
+                    <i class="fa-solid fa-print"></i> XÁC NHẬN & IN
                 </button>
             </div>
         </div>

@@ -6,34 +6,46 @@ header('Content-Type: application/json');
 // Lấy giờ hiện tại
 $current_date = date('Y-m-d');
 $current_hour = (int)date('H');
+$current_minute = (int)date('i');
 $current_shift = '';
 
-// Xác định ca hiện tại
+// --- LOGIC CA LÀM VIỆC MỚI ---
+// Ca Sáng: 7h - 12h
 if ($current_hour >= 7 && $current_hour < 12) {
     $current_shift = 'morning';
-} elseif ($current_hour >= 12 && $current_hour < 17) { // Kéo dài đến 5h chiều
+} 
+// Ca Chiều: 12h - 17h
+elseif ($current_hour >= 12 && $current_hour < 17) {
     $current_shift = 'afternoon';
-} elseif ($current_hour >= 17 && $current_hour < 23) {
-    // Nếu bạn muốn thêm ca tối thì thêm vào đây, tạm thời code chỉ có sáng/chiều
-    // $current_shift = 'evening';
+}
+// Ca Tối: 17h - 23h30
+elseif ($current_hour >= 17) {
+    // Nếu chưa đến 23h thì chắc chắn là tối
+    if ($current_hour < 23) {
+        $current_shift = 'evening';
+    } 
+    // Nếu là 23h thì phải kiểm tra phút (<= 30)
+    elseif ($current_hour == 23 && $current_minute <= 30) {
+        $current_shift = 'evening';
+    }
 }
 
-// BƯỚC 1: Reset toàn bộ nhân viên (trừ Admin) về status = 0
-// Giả sử Admin (role='admin') luôn luôn active (status=1) để quản lý
-$conn->query("UPDATE users SET status = 0 WHERE role != 'admin'");
+// BƯỚC 1: Reset toàn bộ nhân viên về trạng thái nghỉ
+$conn->query("UPDATE users SET status_work = 0");
 
-// BƯỚC 2: Nếu đang trong giờ làm việc, set status = 1 cho người có lịch
+// BƯỚC 2: Nếu đang trong khung giờ làm việc
 if ($current_shift != '') {
     $sql = "UPDATE users u
             JOIN work_schedules ws ON u.id = ws.user_id
-            SET u.status = 1
+            SET u.status_work = 1
             WHERE ws.shift_date = '$current_date' 
-            AND ws.shift_type = '$current_shift'";
+            AND ws.shift_type = '$current_shift'
+            AND u.status = 1";
     
     $conn->query($sql);
-    $msg = "Đã cập nhật: Ca $current_shift ngày $current_date đang hoạt động.";
+    $msg = "Đã cập nhật: Ca $current_shift ($current_date). Nhân viên có lịch đã chuyển sang trạng thái ĐANG LÀM.";
 } else {
-    $msg = "Hiện không phải giờ làm việc. Tất cả nhân viên (trừ Admin) đã off.";
+    $msg = "Hiện không phải giờ làm việc. Tất cả về trạng thái nghỉ.";
 }
 
 echo json_encode(['status' => 'success', 'message' => $msg]);

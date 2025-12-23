@@ -23,12 +23,23 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
       .modal-backdrop { z-index: 1040 !important; }
       .modal { z-index: 1050 !important; }
       .mode-section { display: none; }
+      
       /* CSS cho bảng lịch */
       .table-schedule th { text-align: center; vertical-align: middle; background-color: #343a40; color: white; }
       .table-schedule td { height: 100px; vertical-align: top; position: relative; }
       .shift-item { background: #e8f5e9; border: 1px solid #4caf50; padding: 2px 5px; margin-bottom: 2px; border-radius: 3px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
       .shift-item .btn-del-shift { color: #dc3545; cursor: pointer; margin-left: 5px; }
       .btn-add-shift { position: absolute; bottom: 5px; right: 5px; font-size: 0.7rem; }
+
+      /* CSS cho nút chọn danh mục */
+      .category-selector { display: flex; gap: 15px; margin-bottom: 10px; }
+      .btn-category {
+          flex: 1; padding: 15px; border: none; border-radius: 12px; background: white; color: #555; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; border: 2px solid transparent;
+      }
+      .btn-category i { margin-right: 10px; font-size: 1.4rem; }
+      .btn-category:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+      .btn-category.active[data-type="drink"] { background: linear-gradient(135deg, #3c8dbc, #2980b9); color: white; box-shadow: 0 4px 10px rgba(60, 141, 188, 0.4); }
+      .btn-category.active[data-type="food"] { background: linear-gradient(135deg, #e67e22, #d35400); color: white; box-shadow: 0 4px 10px rgba(230, 126, 34, 0.4); }
   </style>
 </head>
 <body class="hold-transition sidebar-mini">
@@ -50,21 +61,14 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
 
   <aside class="main-sidebar sidebar-dark-primary elevation-4">
     <div class="sidebar">
-      <div class="user-panel mt-3 pb-3 mb-3 d-flex">
-        <div class="image"><img src="./assets/dist/img/logo coffee.png" class="img-fluid elevation-2" style="width: 50px;"></div>
-        <div class="info"><a href="#" class="d-block">Nguyễn Văn Coffee</a></div>
-      </div>
       <nav class="mt-2">
         <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
           <li class="nav-item menu-open">
-            <a href="#" class="nav-link active"><i class="nav-icon fas fa-tachometer-alt"></i><p>Quản lý chung</p></a>
             <ul class="nav nav-treeview">
               <li class="nav-item"><a href="javascript:void(0)" class="nav-link active" id="link-menu" onclick="chuyenCheDo('menu')"><i class="fas fa-coffee nav-icon"></i><p>Danh sách món</p></a></li>
               <li class="nav-item"><a href="javascript:void(0)" class="nav-link" id="link-order" onclick="chuyenCheDo('order')"><i class="fas fa-file-invoice-dollar nav-icon"></i><p>Quản lý Đơn hàng</p></a></li>
               <li class="nav-item"><a href="javascript:void(0)" class="nav-link" id="link-voucher" onclick="chuyenCheDo('voucher')"><i class="fas fa-ticket-alt nav-icon"></i><p>Mã giảm giá</p></a></li>
-              
               <li class="nav-item"><a href="javascript:void(0)" class="nav-link" id="link-schedule" onclick="chuyenCheDo('schedule')"><i class="fas fa-calendar-alt nav-icon"></i><p>Quản lý Phân ca</p></a></li>
-
               <li class="nav-item"><a href="javascript:void(0)" class="nav-link" id="link-report" onclick="chuyenCheDo('report')"><i class="fas fa-chart-bar nav-icon"></i><p>Báo cáo doanh thu</p></a></li>
               <li class="nav-item"><a href="javascript:void(0)" class="nav-link" id="link-user" onclick="chuyenCheDo('user')"><i class="fas fa-users-cog nav-icon"></i><p>Quản lý nhân viên</p></a></li>
                <li class="nav-item"><a href="../pos/index.php" class="nav-link"><i class="fas fa-cash-register nav-icon"></i><p>Về trang bán hàng</p></a></li>
@@ -94,10 +98,12 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
           </div>
 
           <div class="col-sm-6">
-            <ol class="breadcrumb float-sm-right mode-section" id="breadcrumb-menu">
-              <li class="breadcrumb-item"><a href="javascript:void(0)" onclick="chuyenDanhMuc(2, 'Đồ ăn')"><i class="fas fa-hamburger"></i> Đồ ăn</a></li>
-              <li class="breadcrumb-item active"><a href="javascript:void(0)" onclick="chuyenDanhMuc(1, 'Đồ uống')"><i class="fas fa-coffee"></i> Đồ uống</a></li>
-            </ol>
+            <div class="mode-section" id="cat-selector-group">
+                <div class="category-selector float-sm-right" style="width: 100%; max-width: 400px;">
+                    <button class="btn-category active" data-type="drink" onclick="chuyenDanhMuc(1, 'Đồ uống')"><i class="fas fa-coffee"></i> Đồ uống</button>
+                    <button class="btn-category" data-type="food" onclick="chuyenDanhMuc(2, 'Đồ ăn')"><i class="fas fa-hamburger"></i> Đồ ăn</button>
+                </div>
+            </div>
             
             <div class="mode-section" id="report-controls">
                 <form class="form-inline float-sm-right" onsubmit="locBaoCao(event)">
@@ -117,41 +123,28 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
                 <div class="col-12 col-sm-6 col-md-3">
                     <div class="info-box">
                         <span class="info-box-icon bg-info elevation-1"><i class="fas fa-coins"></i></span>
-                        <div class="info-box-content">
-                            <span class="info-box-text">Doanh thu</span>
-                            <span class="info-box-number" id="rpt-revenue">0 đ</span>
-                        </div>
+                        <div class="info-box-content"><span class="info-box-text">Doanh thu</span><span class="info-box-number" id="rpt-revenue">0 đ</span></div>
                     </div>
                 </div>
                 <div class="col-12 col-sm-6 col-md-3">
                     <div class="info-box mb-3">
                         <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-box-open"></i></span>
-                        <div class="info-box-content">
-                            <span class="info-box-text">Tiền nguyên liệu</span>
-                            <span class="info-box-number text-danger" id="rpt-cogs">0 đ</span>
-                        </div>
+                        <div class="info-box-content"><span class="info-box-text">Tiền nguyên liệu</span><span class="info-box-number text-danger" id="rpt-cogs">0 đ</span></div>
                     </div>
                 </div>
                 <div class="col-12 col-sm-6 col-md-3">
                     <div class="info-box mb-3">
                         <span class="info-box-icon bg-success elevation-1"><i class="fas fa-piggy-bank"></i></span>
-                        <div class="info-box-content">
-                            <span class="info-box-text">Lợi nhuận thực</span>
-                            <span class="info-box-number text-success" id="rpt-profit">0 đ</span>
-                        </div>
+                        <div class="info-box-content"><span class="info-box-text">Lợi nhuận thực</span><span class="info-box-number text-success" id="rpt-profit">0 đ</span></div>
                     </div>
                 </div>
                 <div class="col-12 col-sm-6 col-md-3">
                     <div class="info-box mb-3">
                         <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-shopping-cart"></i></span>
-                        <div class="info-box-content">
-                            <span class="info-box-text">Tổng đơn</span>
-                            <span class="info-box-number" id="rpt-orders">0</span>
-                        </div>
+                        <div class="info-box-content"><span class="info-box-text">Tổng đơn</span><span class="info-box-number" id="rpt-orders">0</span></div>
                     </div>
                 </div>
             </div>
-
             <div class="row"><div class="col-md-12"><div class="card"><div class="card-body"><canvas id="revenue-chart" height="250"></canvas></div></div></div></div>
             <div class="row"><div class="col-12"><div class="card"><div class="card-body table-responsive p-0" style="height: 300px;"><table class="table table-head-fixed text-nowrap"><thead><tr><th>Mã đơn</th><th>Thời gian</th><th>Nhân viên</th><th class="text-right">Thành tiền</th></tr></thead><tbody id="rpt-table-body"></tbody></table></div></div></div></div>
         </div>
@@ -182,6 +175,11 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
                                 <th><strong>CHIỀU</strong><br>(12h - 17h)</th>
                                 <td id="cell-afternoon-0"></td><td id="cell-afternoon-1"></td><td id="cell-afternoon-2"></td>
                                 <td id="cell-afternoon-3"></td><td id="cell-afternoon-4"></td><td id="cell-afternoon-5"></td><td id="cell-afternoon-6"></td>
+                            </tr>
+                            <tr>
+                                <th><strong>TỐI</strong><br>(17h - 23h30)</th>
+                                <td id="cell-evening-0"></td><td id="cell-evening-1"></td><td id="cell-evening-2"></td>
+                                <td id="cell-evening-3"></td><td id="cell-evening-4"></td><td id="cell-evening-5"></td><td id="cell-evening-6"></td>
                             </tr>
                         </tbody>
                     </table>
@@ -230,7 +228,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
 
         taiNoiDung();
         loadIngredients();
-        updateSelectUsers(); // Load user sẵn
+        updateSelectUsers(); 
         $('#searchInput').on('keyup', function(){ taiNoiDung(); });
     });
 
@@ -248,7 +246,9 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
         $('#searchForm').show();
 
         if(mode == 'menu') {
-            $('#link-menu').addClass('active'); $('#page-title').text('Danh sách món'); $('#btn-group-menu, #breadcrumb-menu').show(); $('#hienthi-sanpham').show(); taiNoiDung();
+            $('#link-menu').addClass('active'); $('#page-title').text('Danh sách món'); 
+            $('#btn-group-menu').show(); $('#cat-selector-group').show();
+            $('#hienthi-sanpham').show(); taiNoiDung();
         } else if(mode == 'user') {
             $('#link-user').addClass('active'); $('#page-title').text('Quản lý nhân viên'); $('#btn-group-user').show(); $('#hienthi-sanpham').show(); taiNoiDung();
         } else if(mode == 'order') {
@@ -262,34 +262,36 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
         }
     };
 
-    // --- LOGIC BÁO CÁO (ĐÃ CẬP NHẬT) ---
+    window.chuyenDanhMuc = function(catId, title) {
+        currentCategory = catId;
+        $('.btn-category').removeClass('active');
+        if (catId == 1) { $('.btn-category[data-type="drink"]').addClass('active'); } 
+        else { $('.btn-category[data-type="food"]').addClass('active'); }
+        $('#page-title').text('Danh sách ' + title);
+        $('#searchInput').val('');
+        taiNoiDung();
+    };
+
+    // --- LOGIC BÁO CÁO ---
     window.locBaoCao = function(e) { e.preventDefault(); taiBaoCao(); }
     window.taiBaoCao = function() {
         var start = $('#report_start').val();
         var end = $('#report_end').val();
-        
         $.ajax({
-            url: 'api/get_report_stats.php',
-            type: 'GET',
-            data: {start: start, end: end},
-            dataType: 'json',
+            url: 'api/get_report_stats.php', type: 'GET', data: {start: start, end: end}, dataType: 'json',
             success: function(res) {
                 var fmt = new Intl.NumberFormat('vi-VN');
-                
-                // Hiển thị Doanh thu, COGS, Lợi nhuận
                 $('#rpt-revenue').text(fmt.format(res.summary.revenue) + ' đ');
                 $('#rpt-cogs').text(fmt.format(res.summary.cogs) + ' đ');
                 $('#rpt-profit').text(fmt.format(res.summary.profit) + ' đ');
                 $('#rpt-orders').text(res.summary.orders);
-                
-                // Bảng và Biểu đồ
                 $('#rpt-table-body').html(res.table);
                 renderChart(res.chart.labels, res.chart.data);
             }
         });
     }
 
-    // --- LOGIC KHÁC GIỮ NGUYÊN ---
+    // --- LOGIC LỊCH LÀM VIỆC (ĐÃ CẬP NHẬT) ---
     function taiLichLamViec() {
         $.ajax({
             url: 'api/get_schedules.php', type: 'GET', data: {start_date: currentWeekStart}, dataType: 'json',
@@ -301,12 +303,16 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
         var start = new Date(startDate);
         var endDate = new Date(start); endDate.setDate(start.getDate() + 6);
         $('#schedule-range').text(formatDate(start) + ' - ' + formatDate(endDate));
+        
         for(var i=0; i<7; i++) {
             var d = new Date(start); d.setDate(start.getDate() + i); $('#d-'+i).text(formatDate(d));
             var dateStr = d.toISOString().split('T')[0];
+            // Thêm nút cho cả 3 ca
             $('#cell-morning-'+i).append(`<button class="btn btn-outline-primary btn-xs btn-add-shift" onclick="openAddShift('${dateStr}', 'morning')">+ Thêm</button>`);
             $('#cell-afternoon-'+i).append(`<button class="btn btn-outline-primary btn-xs btn-add-shift" onclick="openAddShift('${dateStr}', 'afternoon')">+ Thêm</button>`);
+            $('#cell-evening-'+i).append(`<button class="btn btn-outline-primary btn-xs btn-add-shift" onclick="openAddShift('${dateStr}', 'evening')">+ Thêm</button>`);
         }
+        
         data.forEach(function(item){
             var diff = Math.ceil(Math.abs(new Date(item.shift_date) - start) / (86400000));
             var cellId = '#cell-' + item.shift_type + '-' + diff;
@@ -315,8 +321,31 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
     }
     function doiTuan(dir) { var d = new Date(currentWeekStart); d.setDate(d.getDate() + dir*7); currentWeekStart = d.toISOString().split('T')[0]; taiLichLamViec(); }
     function updateSelectUsers() { $.get('api/get_users.php', function(data){ var h=$(data), o=''; h.find('.btn-edit-user').each(function(){o+=`<option value="${$(this).data('id')}">${$(this).data('fullname')}</option>`}); $('#sch_users').html(o); }); }
-    function openAddShift(d, t) { $('#sch_date').val(d); $('#sch_type').val(t); $('#lbl_date').text(formatDate(new Date(d))); $('#lbl_type').text(t=='morning'?'Sáng':'Chiều'); $('#modalAddSchedule').modal('show'); }
-    function luuPhanCa(e) { e.preventDefault(); $.ajax({ url: 'api/add_schedule.php', type: 'POST', data: $('#formSchedule').serialize(), dataType: 'json', success: function(res){ if(res.status=='success'){ $('#modalAddSchedule').modal('hide'); taiLichLamViec(); } else alert(res.message); } }); }
+    
+    function openAddShift(d, t) { 
+        $('#sch_date').val(d); $('#sch_type').val(t); 
+        $('#lbl_date').text(formatDate(new Date(d))); 
+        var shiftName = (t=='morning') ? 'Sáng' : (t=='afternoon' ? 'Chiều' : 'Tối');
+        $('#lbl_type').text(shiftName); 
+        $('#modalAddSchedule').modal('show'); 
+    }
+    
+    function luuPhanCa(e, forceUnlock = false) {
+        if(e) e.preventDefault(); 
+        var formData = $('#formSchedule').serializeArray();
+        if (forceUnlock) { formData.push({name: 'force_unlock', value: 'true'}); }
+        $.ajax({
+            url: 'api/add_schedule.php', type: 'POST', data: formData, dataType: 'json',
+            success: function(res) {
+                if(res.status == 'success') { $('#modalAddSchedule').modal('hide'); alert(res.message); taiLichLamViec(); } 
+                else if (res.status == 'locked_user') {
+                    if (confirm(res.message)) { luuPhanCa(null, true); }
+                } 
+                else { alert(res.message); }
+            },
+            error: function() { alert('Lỗi kết nối server.'); }
+        });
+    }
     function xoaCa(id) { if(confirm("Xóa?")) $.ajax({ url: 'api/delete_schedule.php', type: 'POST', data: {id: id}, success: function(){ taiLichLamViec(); } }); }
     function formatDate(d) { return d.getDate()+'/'+(d.getMonth()+1); }
     window.taiNoiDung = function() {
@@ -330,7 +359,6 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
     };
     function renderChart(l, d) { var ctx = document.getElementById('revenue-chart').getContext('2d'); if (myChart) myChart.destroy(); myChart = new Chart(ctx, { type: 'bar', data: { labels: l, datasets: [{ label: 'Doanh thu', data: d, backgroundColor: 'rgba(60,141,188,0.9)' }] }, options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true } } } }); }
     window.xuatExcel = function() { window.location.href = 'api/export_excel.php?start='+$('#report_start').val()+'&end='+$('#report_end').val(); }
-    // ... Các hàm themVoucher, themMon, edit, delete cũ giữ nguyên ...
     window.themVoucher = function(e) { e.preventDefault(); $.ajax({ url: 'api/add_voucher.php', type: 'POST', data: $('#formAddVoucher').serialize(), dataType: 'json', success: function(res) { if(res.status == 'success') { alert(res.message); $('#modalAddVoucher').modal('hide'); $('#formAddVoucher')[0].reset(); taiNoiDung(); } else { alert(res.message); } } }); }
     window.xoaVoucher = function(id) { if(!confirm("Xóa mã này?")) return; $.ajax({ url: 'api/delete_voucher.php', type: 'POST', data: {id: id}, dataType: 'json', success: function(res) { taiNoiDung(); } }); }
     window.xuLyThemUser = function(e) { e.preventDefault(); $.ajax({ url: 'api/add_user.php', type: 'POST', data: $('#formAddUser').serialize(), dataType: 'json', success: function(res) { if(res.status=='success'){ alert(res.message); $('#modalAddUser').modal('hide'); taiNoiDung(); } else alert(res.message); } }); };
@@ -338,54 +366,13 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
     $(document).on('click', '.btn-edit-user', function(){ $('#edit_user_id').val($(this).data('id')); $('#edit_user_fullname').val($(this).data('fullname')); $('#edit_user_username').val($(this).data('username')); $('#edit_user_role').val($(this).data('role')); $('#edit_user_status').val($(this).data('status')); $('#modalEditUser').modal('show'); });
     window.loadIngredients = function() { $.ajax({ url: 'api/get_ingredients.php', dataType: 'json', success: function(data) { ingredientsList = data; } }); }
     window.addIngredientRow = function(containerId, ingId = null, qty = '') { var options = '<option value="">-- Chọn NL --</option>'; if(ingredientsList.length > 0) ingredientsList.forEach(function(ing) { var selected = (ing.id == ingId) ? 'selected' : ''; options += `<option value="${ing.id}" ${selected}>${ing.name} (${ing.unit})</option>`; }); var html = `<div class="d-flex mb-2 align-items-center"><select name="ing_id[]" class="form-control form-control-sm mr-2" style="width:60%">${options}</select><input type="number" step="0.01" name="ing_qty[]" class="form-control form-control-sm mr-2" style="width:25%" value="${qty}"><button type="button" class="btn btn-sm btn-danger" onclick="$(this).parent().remove()">X</button></div>`; $('#' + containerId).append(html); };
-    window.chuyenDanhMuc = function(catId, title) { currentCategory = catId; $('.breadcrumb-item').removeClass('active'); $('#page-title').text('Danh sách ' + title); $('#searchInput').val(''); taiNoiDung(); };
     window.themMon = function(e) { e.preventDefault(); var fd = new FormData(document.getElementById('formAdd')); $.ajax({ url: 'api/add_item.php', type: 'POST', data: fd, contentType: false, processData: false, dataType: 'json', success: function(res) { if(res.status=='success'){ $('#modalAddItem').modal('hide'); alert(res.message); $('#formAdd')[0].reset(); $('#recipe-container-add').html(''); taiNoiDung(); } else alert(res.message); } }); };
     $(document).on('click', '.btn-edit', function(e){ e.preventDefault(); var id = $(this).data('id'); $('#edit_id').val(id); $('#edit_name').val($(this).data('name')); $('#edit_price').val($(this).data('price').toString().replace(/\./g, '')); $('#edit_category').val($(this).data('category')); $('#preview_img').attr('src', $(this).data('img')); $('#recipe-container-edit').html(''); $.ajax({ url: 'api/get_recipe_detail.php', data: {product_id: id}, dataType: 'json', success: function(recipes) { if(recipes && recipes.length > 0) recipes.forEach(r => addIngredientRow('recipe-container-edit', r.ingredient_id, r.quantity_required)); else addIngredientRow('recipe-container-edit'); } }); $('#modalEdit').modal('show'); });
     window.luuSua = function(e) { e.preventDefault(); var fd = new FormData(document.getElementById('formEdit')); $.ajax({ url: 'api/update_item.php', type: 'POST', data: fd, contentType: false, processData: false, dataType: 'json', success: function(res){ if(res.status=='success'){ $('#modalEdit').modal('hide'); alert('Cập nhật xong!'); taiNoiDung(); } else alert(res.message); } }); };
     $(document).on('click', '.btn-delete', function(){ $('#idDelete').val($(this).data('id')); $('#modalDelete').modal('show'); });
     window.xacNhanXoa = function() { $.ajax({ url: 'api/delete_item.php', type: 'POST', data: {id: $('#idDelete').val()}, dataType: 'json', success: function(res){ $('#modalDelete').modal('hide'); if(res.status=='success') taiNoiDung(); else alert(res.message); } }); };
-// --- LOGIC XỬ LÝ ĐƠN HÀNG ---
-
-// Hàm 1: Xem chi tiết các món trong một đơn hàng
-window.xemChiTietDon = function(orderId) {
-    $.ajax({
-        url: 'api/get_order_detail.php', // Gọi API lấy món
-        type: 'GET',
-        data: { id: orderId },
-        success: function(data) {
-            $('#order-detail-content').html(data); // Đổ dữ liệu vào Modal
-            $('#modalOrderDetail').modal('show');   // Hiện Modal chi tiết
-        },
-        error: function() {
-            alert('Lỗi: Không thể tải chi tiết đơn hàng.');
-        }
-    });
-};
-
-// Hàm 2: Xử lý hủy đơn hàng và hoàn nguyên liệu vào kho
-window.xacNhanHuy = function(orderId) {
-    if (!confirm('Bạn có chắc chắn muốn HỦY đơn hàng #' + orderId + '?\nNguyên liệu sẽ được hoàn lại kho và doanh thu ca làm việc sẽ bị trừ.')) {
-        return;
-    }
-
-    $.ajax({
-        url: 'api/cancel_order.php', // Gọi API xử lý hủy
-        type: 'POST',
-        data: { id: orderId },
-        dataType: 'json',
-        success: function(res) {
-            if (res.status == 'success') {
-                alert(res.message);
-                taiNoiDung(); // Tải lại danh sách đơn hàng để cập nhật trạng thái mới
-            } else {
-                alert('Lỗi: ' + res.message);
-            }
-        },
-        error: function() {
-            alert('Lỗi kết nối server khi thực hiện hủy đơn.');
-        }
-    });
-};
+    window.xemChiTietDon = function(orderId) { $.ajax({ url: 'api/get_order_detail.php', type: 'GET', data: { id: orderId }, success: function(data) { $('#order-detail-content').html(data); $('#modalOrderDetail').modal('show'); }, error: function() { alert('Lỗi: Không thể tải chi tiết đơn hàng.'); } }); };
+    window.xacNhanHuy = function(orderId) { if (!confirm('Bạn có chắc chắn muốn HỦY đơn hàng #' + orderId + '?\nNguyên liệu sẽ được hoàn lại kho và doanh thu ca làm việc sẽ bị trừ.')) { return; } $.ajax({ url: 'api/cancel_order.php', type: 'POST', data: { id: orderId }, dataType: 'json', success: function(res) { if (res.status == 'success') { alert(res.message); taiNoiDung(); } else { alert('Lỗi: ' + res.message); } }, error: function() { alert('Lỗi kết nối server khi thực hiện hủy đơn.'); } }); };
 </script>
 </body>
 </html>

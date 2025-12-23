@@ -98,11 +98,16 @@ $result = $mysqli->query($query);
                             <td class="text-center"><span class="unit-badge"><?= $row['unit'] ?></span></td>
                             <td class="text-center"><span class="<?= $status_class ?>"><?= $status_text ?></span></td>
                             <td class="text-end pe-4">
-                                <button class="btn btn-sm btn-outline-primary" 
-                                        onclick="openImportModal('<?= $row['id'] ?>', '<?= $row['unit'] ?>')">
-                                    <i class="fa-solid fa-download"></i> Nhập
-                                </button>
-                            </td>
+    <button class="btn btn-sm btn-outline-primary me-1" 
+            onclick="openImportModal('<?= $row['id'] ?>', '<?= $row['unit'] ?>')">
+        <i class="fa-solid fa-download"></i> Nhập
+    </button>
+    
+    <button class="btn btn-sm btn-outline-danger" 
+            onclick="openExportModal('<?= $row['id'] ?>', '<?= $row['name'] ?>', '<?= $row['quantity'] ?>', '<?= $row['unit'] ?>')">
+        <i class="fa-solid fa-trash-can"></i> Hủy
+    </button>
+</td>
                         </tr>
                     <?php endwhile; ?>
                 </tbody>
@@ -305,6 +310,61 @@ $result = $mysqli->query($query);
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="exportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fa-solid fa-triangle-exclamation me-2"></i>Xuất Hủy / Điều Chỉnh Kho</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="exportForm">
+                    <input type="hidden" id="export_ing_id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nguyên liệu:</label>
+                        <input type="text" id="export_ing_name" class="form-control-plaintext fs-5 fw-bold text-danger" readonly>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-6">
+                             <label class="form-label">Tồn hiện tại:</label>
+                             <div class="input-group">
+                                <input type="text" id="export_current_qty" class="form-control bg-light" disabled>
+                                <span class="input-group-text" id="export_unit_display_1">...</span>
+                             </div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold text-danger">Số lượng TRỪ đi:</label>
+                            <div class="input-group">
+                                <input type="number" id="quantity_sub" class="form-control fw-bold border-danger text-danger" min="0.1" step="0.1" required>
+                                <span class="input-group-text bg-danger text-white" id="export_unit_display_2">...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Lý do xuất kho <span class="text-danger">*</span>:</label>
+                        <select id="export_reason_select" class="form-select mb-2" onchange="updateReason()">
+                            <option value="">-- Chọn lý do nhanh --</option>
+                            <option value="Hàng bị hỏng/Hết hạn">Hàng bị hỏng / Hết hạn</option>
+                            <option value="Rơi vỡ/Đổ">Rơi vỡ / Đổ</option>
+                            <option value="Kiểm kê sai lệch">Kiểm kê sai lệch (Hao hụt)</option>
+                            <option value="Xuất dùng nội bộ/Test món">Xuất dùng nội bộ / Test món</option>
+                            <option value="other">Khác...</option>
+                        </select>
+                        <textarea id="export_note" class="form-control" rows="2" placeholder="Nhập chi tiết lý do... (Bắt buộc)"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Thoát</button>
+                <button type="button" class="btn btn-danger px-4 fw-bold" onclick="submitExportAJAX()">Xác nhận TRỪ KHO</button>
+            </div>
+        </div>
+    </div>
+</div>
 <script>
     // 1. Kiểm tra trạng thái ca khi bấm nút Thoát ca
 function confirmEndShiftWarehouse() {
@@ -357,6 +417,81 @@ function submitEndShiftWh() {
     })
     .catch(err => alert("Lỗi kết nối máy chủ!"));
 }
+
+// --- PHẦN XỬ LÝ XUẤT KHO (MỚI) ---
+
+    // 1. Hàm mở Modal Xuất
+    function openExportModal(id, name, currentQty, unit) {
+        const modal = new bootstrap.Modal(document.getElementById('exportModal'));
+        
+        // Điền dữ liệu vào form
+        document.getElementById('export_ing_id').value = id;
+        document.getElementById('export_ing_name').value = name;
+        document.getElementById('export_current_qty').value = currentQty;
+        document.getElementById('export_unit_display_1').textContent = unit;
+        document.getElementById('export_unit_display_2').textContent = unit;
+        
+        // Reset input
+        document.getElementById('quantity_sub').value = '';
+        document.getElementById('quantity_sub').max = currentQty; // Không cho nhập quá tồn
+        document.getElementById('export_note').value = '';
+        document.getElementById('export_reason_select').value = '';
+
+        modal.show();
+    }
+
+    // 2. Helper cập nhật lý do từ dropdown vào textarea
+    function updateReason() {
+        const select = document.getElementById('export_reason_select');
+        const note = document.getElementById('export_note');
+        if (select.value && select.value !== 'other') {
+            note.value = select.value;
+        } else if (select.value === 'other') {
+            note.value = '';
+            note.focus();
+        }
+    }
+
+    // 3. Gửi AJAX Trừ kho
+    function submitExportAJAX() {
+        const id = document.getElementById('export_ing_id').value;
+        const qty = parseFloat(document.getElementById('quantity_sub').value);
+        const currentQty = parseFloat(document.getElementById('export_current_qty').value);
+        const note = document.getElementById('export_note').value.trim();
+
+        // Validate
+        if (!qty || qty <= 0) { alert("Vui lòng nhập số lượng hợp lệ!"); return; }
+        if (qty > currentQty) { alert("Lỗi: Số lượng xuất lớn hơn tồn kho hiện tại!"); return; }
+        if (!note) { alert("Vui lòng nhập lý do xuất kho!"); return; }
+
+        if(!confirm("CẢNH BÁO: Hành động này sẽ trừ kho vĩnh viễn.\nBạn chắc chắn muốn tiếp tục?")) return;
+
+        // Đóng modal
+        const modalEl = document.getElementById('exportModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        modal.hide();
+
+        // Gửi dữ liệu
+        fetch('process_export.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ingredient_id: id,
+                quantity_sub: qty,
+                reason: note
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            showResultModal(data.success, data.message); // Tái sử dụng modal kết quả của phần nhập
+        })
+        .catch(err => {
+            console.error(err);
+            showResultModal(false, "Lỗi kết nối Server!");
+        });
+    }
 </script>
+
+
 </body>
 </html>

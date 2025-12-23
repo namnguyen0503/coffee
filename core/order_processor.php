@@ -18,43 +18,45 @@ try {
     // Mặc định là 'cash' nếu không có dữ liệu gửi lên
     $payment_method = isset($input['payment_method']) ? $input['payment_method'] : 'cash'; 
     // -----------------------
-    // --- [XỬ LÝ VOUCHER (SERVER SIDE)] ---
+    // --- [XỬ LÝ VOUCHER & GIẢM GIÁ (ĐÃ FIX CHECK DB)] ---
     $voucher_code = isset($input['voucher_code']) ? strtoupper(trim($input['voucher_code'])) : '';
+    // $requested_percent chỉ dùng cho ADMINVIP, các mã khác phải lấy từ DB để bảo mật
     $requested_percent = isset($input['discount_percent']) ? (float)$input['discount_percent'] : 0;
     
     $applied_discount_percent = 0; // Mặc định không giảm
 
-    // A. LOGIC VOUCHER ADMIN (ADMINVIP)
+    // TRƯỜNG HỢP 1: ADMINVIP (Quyền lực tối cao - Tự nhập %)
     if ($voucher_code === 'ADMINVIP') {
-        // Chỉ cho phép nếu user đang login là role 'admin'
-        // Bạn cần check cột 'role' trong bảng users. Giả sử session đã lưu role.
-        // Nếu session chưa lưu role, cần query DB để check.
-        
+        // Check quyền: Phải là admin mới được dùng
         $stmt_role = $mysqli->prepare("SELECT role FROM users WHERE id = ?");
         $stmt_role->bind_param("i", $_SESSION['user_id']);
         $stmt_role->execute();
         $user_role = $stmt_role->get_result()->fetch_assoc()['role'] ?? 'staff';
 
         if ($user_role === 'admin') {
-            // Admin được quyền set % tùy ý (nhưng không quá 100%)
             if ($requested_percent < 0 || $requested_percent > 100) {
                 throw new Exception("Phần trăm giảm giá không hợp lệ (0-100).");
             }
             $applied_discount_percent = $requested_percent;
         } else {
-            // Nếu không phải admin mà dùng mã này -> Phạt hoặc lờ đi
             throw new Exception("Mã ADMINVIP chỉ dành cho Quản lý!");
         }
     }
-    // B. LOGIC VOUCHER KHÁCH HÀNG (Cố định)
-    elseif ($voucher_code === 'WELCOME') { // Ví dụ mã dùng 1 lần
-        $applied_discount_percent = 10; // Giảm cứng 10%
-    }
-    elseif ($voucher_code === 'FREESHIP') {
-        $applied_discount_percent = 5; 
-    }
+    // TRƯỜNG HỢP 2: CÁC MÃ KHÁC (Check trong Database)
     elseif (!empty($voucher_code)) {
-        throw new Exception("Mã giảm giá không tồn tại hoặc hết hạn!");
+        // Truy vấn bảng vouchers để lấy % chính xác
+        $stmt_v = $mysqli->prepare("SELECT discount_percent FROM vouchers WHERE code = ?");
+        $stmt_v->bind_param("s", $voucher_code);
+        $stmt_v->execute();
+        $res_v = $stmt_v->get_result();
+        
+        if ($row_v = $res_v->fetch_assoc()) {
+            // Lấy % từ DB (không tin client gửi lên để tránh hack F12 sửa %)
+            $applied_discount_percent = (float)$row_v['discount_percent'];
+        } else {
+            // Mã có gửi lên nhưng không tìm thấy trong DB
+            throw new Exception("Mã giảm giá '$voucher_code' không tồn tại hoặc hết hạn!");
+        }
     }
 
     // 3. Tính tổng tiền (Server tự tính từ DB)

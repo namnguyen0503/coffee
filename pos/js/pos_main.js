@@ -964,68 +964,75 @@ function finishPrintingProcess() {
 }
 function checkVoucher() {
     const codeInput = document.getElementById('voucher-code');
-    // Fix lỗi undefined nếu input chưa load kịp
-    if (!codeInput) return; 
+    const discountDisplay = document.getElementById('discount-display');
+    
+    // Safety check
+    if (!codeInput) return;
 
     const code = (codeInput.value || "").trim().toUpperCase();
-    const discountDisplay = document.getElementById('discount-display');
 
+    // Reset nếu rỗng
     if (!code) {
-        currentDiscountPercent = 0;
-        discountDisplay.textContent = "0%";
-        updateTotalAmount();
+        applyDiscount(0);
         return;
     }
 
-    // 1. LOGIC ADMIN (Voucher vĩnh viễn)
+    // 1. ƯU TIÊN: LOGIC ADMIN (Vẫn giữ nguyên tính năng nhập tay linh hoạt)
+    // Dù trong DB có mã ADMINVIP 100%, nhưng ở POS ta muốn nhập tay tùy ý
     if (code === 'ADMINVIP') {
-        // GỌI MODAL VÀ TRUYỀN HÀM XỬ LÝ VÀO (CALLBACK)
         showCustomPrompt("🔔 ADMIN DETECTED!\nNhập phần trăm muốn giảm giá (0-100):", function(percent) {
-            
-            // Code này chỉ chạy KHI bấm nút "Xác nhận" trong Modal
             if (percent !== null && percent.trim() !== "") {
                 let p = parseFloat(percent);
                 if (!isNaN(p) && p >= 0 && p <= 100) {
-                    currentDiscountPercent = p;
-                    showCustomAlert(`Đã áp dụng giảm giá ADMIN: ${p}%`, 'success');
+                    applyDiscount(p);
+                    showCustomAlert(`Đã áp dụng quyền ADMIN: Giảm ${p}%`, 'success');
                 } else {
                     showCustomAlert("Số phần trăm không hợp lệ!", 'error');
-                    currentDiscountPercent = 0;
+                    applyDiscount(0);
                     codeInput.value = "";
                 }
             } else {
-                currentDiscountPercent = 0;
+                applyDiscount(0);
                 codeInput.value = "";
             }
-
-            // Cập nhật giao diện SAU KHI xử lý callback
-            discountDisplay.textContent = `-${currentDiscountPercent}%`;
-            updateTotalAmount();
         });
-        
-        return; // Dừng hàm chính tại đây, đợi Modal trả lời
-    } 
-    
-    // 2. LOGIC VOUCHER KHÁCH (Chạy thẳng vì không cần nhập thêm)
-    else if (code === 'WELCOME') {
-        currentDiscountPercent = 10;
-        showCustomAlert("Áp dụng mã WELCOME: Giảm 10%", 'success');
-    }
-    else if (code === 'FREESHIP') {
-        currentDiscountPercent = 5;
-        showCustomAlert("Áp dụng mã FREESHIP: Giảm 5%", 'success');
-    }
-    else {
-        showCustomAlert("Mã giảm giá không hợp lệ!", 'warning');
-        currentDiscountPercent = 0;
-        codeInput.value = "";
+        return; // Kết thúc, không gọi API nữa
     }
 
-    // Cập nhật giao diện (Cho trường hợp không phải Admin)
-    discountDisplay.textContent = `-${currentDiscountPercent}%`;
-    updateTotalAmount();
+    // 2. LOGIC THƯỜNG: CHECK DB (AJAX)
+    // Gọi file PHP vừa tạo ở Bước 1
+    fetch('check_voucher.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            // Tìm thấy voucher trong DB
+            applyDiscount(data.percent);
+            showCustomAlert(`Áp dụng mã ${data.code}: Giảm ${data.percent}%`, 'success');
+        } else {
+            // Không tìm thấy
+            showCustomAlert(data.message, 'warning');
+            applyDiscount(0);
+            codeInput.value = ""; // Xóa mã sai đi
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        showCustomAlert("Lỗi kết nối Server!", 'error');
+    });
+
+    // Helper function để cập nhật UI gọn hơn
+    function applyDiscount(percent) {
+        currentDiscountPercent = percent;
+        if (discountDisplay) {
+            discountDisplay.textContent = `-${currentDiscountPercent}%`;
+        }
+        updateTotalAmount();
+    }
 }
-
 /* =============================================================
    LOGIC MODAL TÍNH TIỀN THỪA (NEW UX)
    ============================================================= */

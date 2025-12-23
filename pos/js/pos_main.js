@@ -964,7 +964,10 @@ function finishPrintingProcess() {
 }
 function checkVoucher() {
     const codeInput = document.getElementById('voucher-code');
-    const code = codeInput.value.trim().toUpperCase();
+    // Fix lỗi undefined nếu input chưa load kịp
+    if (!codeInput) return; 
+
+    const code = (codeInput.value || "").trim().toUpperCase();
     const discountDisplay = document.getElementById('discount-display');
 
     if (!code) {
@@ -976,42 +979,51 @@ function checkVoucher() {
 
     // 1. LOGIC ADMIN (Voucher vĩnh viễn)
     if (code === 'ADMINVIP') {
-        let percent = ShowCustomPrompt("🔔 ADMIN DETECTED!\nNhập phần trăm muốn giảm giá (0-100):");
-        
-        if (percent !== null && percent.trim() !== "") {
-            percent = parseFloat(percent);
-            if (!isNaN(percent) && percent >= 0 && percent <= 100) {
-                currentDiscountPercent = percent;
-                showCustomAlert(`Đã áp dụng giảm giá ADMIN: ${percent}%`);
+        // GỌI MODAL VÀ TRUYỀN HÀM XỬ LÝ VÀO (CALLBACK)
+        showCustomPrompt("🔔 ADMIN DETECTED!\nNhập phần trăm muốn giảm giá (0-100):", function(percent) {
+            
+            // Code này chỉ chạy KHI bấm nút "Xác nhận" trong Modal
+            if (percent !== null && percent.trim() !== "") {
+                let p = parseFloat(percent);
+                if (!isNaN(p) && p >= 0 && p <= 100) {
+                    currentDiscountPercent = p;
+                    showCustomAlert(`Đã áp dụng giảm giá ADMIN: ${p}%`, 'success');
+                } else {
+                    showCustomAlert("Số phần trăm không hợp lệ!", 'error');
+                    currentDiscountPercent = 0;
+                    codeInput.value = "";
+                }
             } else {
-                showCustomAlert("Số phần trăm không hợp lệ!");
                 currentDiscountPercent = 0;
                 codeInput.value = "";
             }
-        } else {
-            // Nếu bấm Cancel
-            currentDiscountPercent = 0;
-            codeInput.value = "";
-        }
+
+            // Cập nhật giao diện SAU KHI xử lý callback
+            discountDisplay.textContent = `-${currentDiscountPercent}%`;
+            updateTotalAmount();
+        });
+        
+        return; // Dừng hàm chính tại đây, đợi Modal trả lời
     } 
-    // 2. LOGIC VOUCHER KHÁCH (Dùng 1 lần - Client chỉ hiển thị giả định, Server sẽ check lại)
+    
+    // 2. LOGIC VOUCHER KHÁCH (Chạy thẳng vì không cần nhập thêm)
     else if (code === 'WELCOME') {
         currentDiscountPercent = 10;
-        showCustomAlert("Áp dụng mã WELCOME: Giảm 10%");
+        showCustomAlert("Áp dụng mã WELCOME: Giảm 10%", 'success');
     }
     else if (code === 'FREESHIP') {
         currentDiscountPercent = 5;
-        showCustomAlert("Áp dụng mã FREESHIP: Giảm 5%");
+        showCustomAlert("Áp dụng mã FREESHIP: Giảm 5%", 'success');
     }
     else {
-        showCustomAlert("Mã giảm giá không hợp lệ!");
+        showCustomAlert("Mã giảm giá không hợp lệ!", 'warning');
         currentDiscountPercent = 0;
         codeInput.value = "";
     }
 
-    // Cập nhật giao diện
+    // Cập nhật giao diện (Cho trường hợp không phải Admin)
     discountDisplay.textContent = `-${currentDiscountPercent}%`;
-    updateTotalAmount(); // Tính lại tổng tiền hiển thị
+    updateTotalAmount();
 }
 
 /* =============================================================
@@ -1167,25 +1179,48 @@ let promptCallback = null;
 
 function showCustomPrompt(message, callback) {
     const modalEl = document.getElementById('customPromptModal');
-    document.getElementById('prompt-message').textContent = message;
-    const input = document.getElementById('prompt-input');
-    input.value = ''; // Reset
+    const msgEl = document.getElementById('prompt-message');
+    const inputEl = document.getElementById('prompt-input');
 
-    promptCallback = callback;
+    if (!modalEl) {
+        alert("Lỗi: Không tìm thấy HTML của Modal Prompt!");
+        return;
+    }
+
+    msgEl.textContent = message;
+    inputEl.value = ''; // Reset ô nhập
+    promptCallback = callback; // Lưu hàm callback lại để dùng sau
     
     const modal = new bootstrap.Modal(modalEl);
     modal.show();
 
-    setTimeout(() => input.focus(), 500); // Auto focus
+    // Auto focus và lắng nghe phím Enter
+    setTimeout(() => {
+        inputEl.focus();
+        // Xóa sự kiện cũ để tránh bị double submit nếu mở nhiều lần
+        inputEl.onkeydown = null; 
+        inputEl.onkeydown = function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('btn-prompt-submit').click();
+            }
+        };
+    }, 500);
 }
 
+// Xử lý khi bấm nút "Xác nhận"
 document.getElementById('btn-prompt-submit')?.addEventListener('click', function() {
     const val = document.getElementById('prompt-input').value;
+    
+    // Ẩn modal
+    const modalEl = document.getElementById('customPromptModal');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    modal.hide();
+
+    // Gọi lại hàm xử lý (checkVoucher logic) với giá trị vừa nhập
     if (promptCallback) {
         promptCallback(val);
+        promptCallback = null; // Reset để tránh lỗi
     }
-    const modal = bootstrap.Modal.getInstance(document.getElementById('customPromptModal'));
-    modal.hide();
 });
 
 // Hàm chuyển đổi giao diện Tiền mặt / Chuyển khoản

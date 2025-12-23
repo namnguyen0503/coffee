@@ -1,8 +1,11 @@
 <?php
 session_start();
-    if (!isset($_SESSION['role'])) {
-    header("Location: ../login.php?error=no_permission");
-    exit();
+require_once '../includes/db_connection.php';
+
+// 1. Chặn truy cập trái phép
+if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
+    header("Location: ../login.php");
+    exit;
 }
 ?>
 <!DOCTYPE html>

@@ -134,7 +134,7 @@ if ($role === 'wh-staff') $role_label = 'Thủ kho';
 
 
 
-<button class="btn btn-outline-danger btn-sm ms-2" type="button" data-bs-toggle="modal" data-bs-target="#modalEndShiftRoot">
+<button class="btn btn-outline-danger btn-sm ms-2" onclick="confirmLogout()">
     <i class="fa-solid fa-right-from-bracket"></i> Thoát ca
 </button>
     </div>
@@ -179,6 +179,29 @@ if ($role === 'wh-staff') $role_label = 'Thủ kho';
 
     </div>
 </div>
-
+<script>
+    function confirmLogout() {
+    // 1. Kiểm tra xem user có đang trong ca làm việc không
+    fetch('core/session_manager.php?action=check_status')
+    .then(res => res.json())
+    .then(data => {
+        if (data.success && data.is_open) {
+            // TRƯỜNG HỢP 1: ĐANG TRONG CA
+            // Hiển thị modal bắt chốt tiền (id modal của bạn là modalEndShiftRoot)
+            const modal = new bootstrap.Modal(document.getElementById('modalEndShiftRoot'));
+            modal.show();
+        } else {
+            // TRƯỜNG HỢP 2: CHƯA VÀO CA (hoặc lỗi dữ liệu)
+            // Đăng xuất thẳng luôn, không hiện modal lằng nhằng
+            window.location.href = 'logout.php';
+        }
+    })
+    .catch(err => {
+        console.error("Lỗi kết nối:", err);
+        // Nếu lỗi API, mặc định cho logout luôn để nhân viên không bị kẹt
+        window.location.href = 'logout.php';
+    });
+}
+</script>
 </body>
 </html>

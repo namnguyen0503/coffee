@@ -8,16 +8,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $price = $_POST['price'];
     $category = $_POST['category'];
     
-    // 1. Xử lý ảnh
-    $image_path = "assets/dist/img/default.jpg"; // Ảnh mặc định
+    // 1. Cấu hình đường dẫn
+    // $_SERVER['DOCUMENT_ROOT'] trỏ thẳng về thư mục gốc của website (thư mục chứa toàn bộ dự án)
+$root_path = dirname(__DIR__, 2); // Nhảy ngược ra 2 cấp từ file hiện tại để về root    $image_path = "assets/dist/img/default.jpg"; // Giá trị mặc định để lưu vào DB
+
     if (!empty($_FILES['image']['name'])) {
-        $target_dir = "../../uploads/";
-        if (!file_exists($target_dir)) mkdir($target_dir, 0777, true);
+        // Xác định thư mục con dựa trên category
+        $sub_folder = ($category == 1) ? "drink/" : "food/";
+        
+        // Đường dẫn vật lý trên ổ đĩa để upload file (Dùng để mkdir và move_uploaded_file)
+        $target_dir = $root_path . "/assets/img/" . $sub_folder;
+        
+        // Tạo thư mục nếu chưa tồn tại
+        if (!file_exists($target_dir)) {
+            mkdir($target_dir, 0777, true);
+        }
         
         $filename = time() . "_" . basename($_FILES["image"]["name"]);
         $target_file = $target_dir . $filename;
+
         if (move_uploaded_file($_FILES["image"]["tmp_name"], $target_file)) {
-            $image_path = "uploads/" . $filename;
+            // Đường dẫn tương đối để lưu vào Database (để hiển thị lên web sau này)
+            $image_path = "assets/img/" . $sub_folder . $filename;
         }
     }
 
@@ -27,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $stmt->bind_param("siis", $name, $price, $category, $image_path);
     
     if ($stmt->execute()) {
-        $product_id = $conn->insert_id; // Lấy ID vừa tạo
+        $product_id = $conn->insert_id; 
 
         // 3. Insert công thức (Mapping nguyên liệu)
         if (isset($_POST['ing_id']) && isset($_POST['ing_qty'])) {

@@ -3,12 +3,48 @@ session_start();
 require_once '../includes/db_connection.php';
 global $mysqli;
 
+// --- [THÊM MỚI: HÀM XỬ LÝ ĐƯỜNG DẪN ẢNH THÔNG MINH] ---
+function getProductImage($dbPath) {
+    // 1. Nếu không có dữ liệu -> Trả về ảnh rỗng
+    if (empty($dbPath)) {
+        return 'https://placehold.co/150x150?text=No+Img';
+    }
+
+    // 2. Nếu là link online (http) -> Giữ nguyên
+    if (strpos($dbPath, 'http') === 0) {
+        return $dbPath;
+    }
+
+    // 3. Chuẩn hóa đường dẫn (Xóa ../ hoặc / ở đầu để xử lý thống nhất)
+    $cleanPath = ltrim($dbPath, './'); 
+    // Lúc này $cleanPath sẽ sạch, ví dụ: "assets/img/drink/cafe.jpg"
+
+    // 4. Kiểm tra nguồn ảnh và tạo đường dẫn tương đối từ thư mục /pos/
+    
+    // Trường hợp A: Ảnh nằm trong thư mục uploads của Admin (Admin mới)
+    if (strpos($cleanPath, 'uploads/') === 0) {
+        // Nếu DB lưu "uploads/abc.jpg" -> POS gọi "../admin/uploads/abc.jpg"
+        return '../admin/' . $cleanPath;
+    }
+    
+    // Trường hợp B: Ảnh nằm trong thư mục assets (Code cũ của Nam)
+    if (strpos($cleanPath, 'assets/') === 0) {
+        // Nếu DB lưu "assets/img/..." -> POS gọi "../assets/img/..."
+        return '../' . $cleanPath;
+    }
+
+    // Trường hợp C: Admin chỉ lưu tên file (Ví dụ: "cafe.jpg") -> Mặc định tìm trong assets/img/drink hoặc food?
+    // Để an toàn, trỏ vào uploads của admin
+    return '../admin/uploads/' . $cleanPath;
+}
+// -----------------------------------------------------------
+
 // 1. Bảo vệ trang
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../login.php");
     exit;
 }
-
+// ... (Phần code còn lại giữ nguyên) ...
 
 // 2. Lấy danh mục
 $categories = $mysqli->query("SELECT * FROM categories");
@@ -175,9 +211,11 @@ while ($row = $recipe_result->fetch_assoc()) {
     <?php if($is_out_of_stock): ?>
         <div class="badge-stock">Tạm hết</div>
     <?php endif; ?>
-
-    <img src="<?= !empty($row['image_url']) ? '../uploads/'.$row['image_url'] : 'https://placehold.co/150x150?text=No+Img' ?>" 
-         class="card-img-top rounded-3 mb-2" alt="<?= $row['name'] ?>">
+    
+    <img src="<?= getProductImage($row['image_url']) ?>" 
+     class="card-img-top rounded-3 mb-2" 
+     alt="<?= htmlspecialchars($row['name']) ?>"
+     onerror="this.src='https://placehold.co/150x150?text=Anh+Loi'">
     
     <div class="card-body p-1 d-flex flex-column justify-content-between">
         <h6 class="card-title text-truncate" title="<?= htmlspecialchars($row['name']) ?>">
@@ -467,6 +505,6 @@ while ($row = $recipe_result->fetch_assoc()) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script src="js/pos_main.js"></script>
-
+        
 </body>
 </html>

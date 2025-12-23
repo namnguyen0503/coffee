@@ -31,6 +31,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Kiểm tra mật khẩu
             if (password_verify($password, $user['password'])) {
+                
+                
                 // Lưu session
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['fullname'] = $user['fullname'];

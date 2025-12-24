@@ -237,68 +237,110 @@ if ($role === 'wh-staff') $role_label = 'Thủ kho';
 
 <script>
     (function() {
-    const secret = "origin";
+    const secretOrigin = "origin";
+    const secretLoop = "loop";
     let input = "";
+    
     const signature = document.getElementById('origin-signature');
     const audio = document.getElementById('morse-audio');
+    
     let hideTimer;
-    let isVisible = false; // Biến kiểm tra trạng thái hiện tại
+    let isVisible = false;
+    let isLooping = false;
 
     document.addEventListener('keydown', (e) => {
         if (e.key.length === 1 && e.key.match(/[a-z]/i)) {
             input += e.key.toLowerCase();
-            if (input.length > 20) input = input.slice(-secret.length);
+            
+            // Giữ bộ nhớ đệm đủ dài cho cả "origin" và "loop"
+            if (input.length > 10) input = input.slice(-10);
 
-            if (input.includes(secret)) {
-                toggleSignature(); // Đổi sang hàm toggle (bật/tắt)
+            // Kiểm tra lệnh ORIGIN
+            if (input.endsWith(secretOrigin)) {
+                toggleOrigin();
                 input = ""; 
+            }
+            
+            // Kiểm tra lệnh LOOP
+            if (input.endsWith(secretLoop)) {
+                toggleLoop();
+                input = "";
             }
         }
     });
 
-    function toggleSignature() {
+    function toggleOrigin() {
         if (!isVisible) {
-            // LỆNH MỞ (Bật chữ và nhạc)
+            // HIỆN
             isVisible = true;
             signature.style.opacity = "1";
             signature.style.pointerEvents = "auto";
             
             if (audio) {
-                audio.volume = 1; // Đảm bảo âm lượng tối đa khi bật lại
+                audio.volume = 1;
                 audio.currentTime = 0;
                 audio.play();
+                // Khi bật origin, mặc định sẽ tự tắt sau 46s TRỪ KHI đang bật loop
+                startHideTimer();
             }
-
-            if (hideTimer) clearTimeout(hideTimer);
-            hideTimer = setTimeout(() => {
-                if (isVisible) fadeOutAndHide();
-            }, 46000);
-
         } else {
-            // LỆNH TẮT (Nếu đang hiện thì ẩn ngay lập tức)
+            // TẮT NGAY LẬP TỨC
             fadeOutAndHide();
+        }
+    }
+
+    function toggleLoop() {
+        if (!isVisible) return; // Nếu chưa hiện chữ/nhạc thì lệnh loop không có tác dụng
+
+        isLooping = !isLooping; // Đảo trạng thái loop
+        
+        if (audio) {
+            audio.loop = isLooping;
+        }
+
+        if (isLooping) {
+            console.log("Loop Enabled");
+            if (hideTimer) clearTimeout(hideTimer); // Hủy đếm ngược tắt nhạc
+            // Có thể thêm hiệu ứng nhẹ để biết loop đang bật (ví dụ: đổi màu tim)
+            document.querySelector('.fa-heart').style.textShadow = "0 0 10px #ff4d6d";
+        } else {
+            console.log("Loop Disabled");
+            document.querySelector('.fa-heart').style.textShadow = "none";
+            startHideTimer(); // Bắt đầu lại đếm ngược để tắt sau khi bỏ loop
+        }
+    }
+
+    function startHideTimer() {
+        if (hideTimer) clearTimeout(hideTimer);
+        // Chỉ chạy timer nếu KHÔNG ở chế độ loop
+        if (!isLooping) {
+            hideTimer = setTimeout(() => {
+                fadeOutAndHide();
+            }, 46000);
         }
     }
 
     function fadeOutAndHide() {
         isVisible = false;
+        isLooping = false; // Reset luôn trạng thái loop
+        if (audio) audio.loop = false;
+        
         signature.style.opacity = "0";
         signature.style.pointerEvents = "none";
         
         if (hideTimer) clearTimeout(hideTimer);
 
-        // Hiệu ứng Fade Out âm thanh (giảm dần trong 1.5s cùng lúc với opacity)
         if (audio && !audio.paused) {
             let fadeInterval = setInterval(() => {
                 if (audio.volume > 0.05) {
-                    audio.volume -= 0.05; // Giảm dần âm lượng
+                    audio.volume -= 0.05;
                 } else {
                     audio.pause();
                     audio.currentTime = 0;
-                    audio.volume = 1; // Reset lại âm lượng cho lần sau
+                    audio.volume = 1;
                     clearInterval(fadeInterval);
                 }
-            }, 75); // 75ms mỗi bước giảm, tổng cộng ~1.5s
+            }, 75);
         }
     }
 })();

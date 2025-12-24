@@ -40,7 +40,7 @@ function getProductImage($dbPath) {
 // -----------------------------------------------------------
 
 // 1. Bảo vệ trang
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['user_id'])|| ($_SESSION['role'] !== 'staff' && $_SESSION['role'] !== 'admin')) {
     header("Location: ../login.php");
     exit;
 }
@@ -163,6 +163,9 @@ while ($row = $recipe_result->fetch_assoc()) {
         <div class="user-info">
             <span class="text-muted small">Thu ngân:</span> 
             <strong><?= htmlspecialchars($_SESSION['fullname']) ?></strong>
+            <button class="btn btn-outline-primary btn-sm ms-2" onclick="openCustomerScreen()">
+    <i class="fa-solid fa-desktop"></i> Màn hình khách
+</button>
             <button class="btn btn-outline-danger btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#modalEndShift">
     <i class="fa-solid fa-right-from-bracket"></i> Thoát ca
 </button>
@@ -391,7 +394,7 @@ while ($row = $recipe_result->fetch_assoc()) {
                                 <i class="fa-solid fa-money-bill-1 me-2 text-success"></i> Tiền mặt (Cash)
                             </a>
                             <a class="list-group-item list-group-item-action py-3" id="method-transfer" data-bs-toggle="list" href="#tab-transfer" role="tab" onclick="setPaymentMethod('transfer')">
-                                <i class="fa-solid fa-qrcode me-2 text-primary"></i> Chuyển khoản (QR)
+                                <i class="fa-solid fa-qrcode me-2 text-primary" style="color: #000;"></i> Chuyển khoản (QR)
                             </a>
                         </div>
                         <div class="p-3 mt-auto text-center">

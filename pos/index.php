@@ -4,7 +4,7 @@ require_once '../includes/db_connection.php';
 global $mysqli;
 
 // Bảo vệ trang: Chỉ nhân viên hoặc admin đã đăng nhập mới vào được
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['user_id'])|| ($_SESSION['role'] !== 'staff' && $_SESSION['role'] !== 'admin')) {
     header("Location: ../login.php");
     exit;
 }

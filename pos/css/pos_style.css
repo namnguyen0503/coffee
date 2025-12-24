@@ -612,3 +612,7 @@ html {
         white-space: nowrap; /* Không cho xuống dòng */
     }
 }
+
+.fa-qrcode {
+    color:#000;
+}

@@ -7,6 +7,17 @@ const BANK_CONFIG = {
     TEMPLATE: 'compact', // Giao diện QR: 'compact', 'qr_only', 'print'
     ACCOUNT_NAME: 'NGUYEN DANH NHAT NAM' // Tên chủ tài khoản (để hiển thị cho chắc)
 };
+// Kênh giao tiếp màn hình khách
+const customerChannel = new BroadcastChannel('pos_customer_display');
+const modalPaymentEl = document.getElementById('modalPayment');
+modalPaymentEl.addEventListener('hidden.bs.modal', function () {
+    customerChannel.postMessage({ type: 'RESET' });
+});
+
+function openCustomerScreen() {
+    // Mở popup window
+    window.open('customer_view.php', 'CustomerScreen', 'width=800,height=600');
+}
 /* =============================================================
    1. KHỞI TẠO BIẾN & DATA
    ============================================================= */
@@ -590,14 +601,10 @@ function handleCheckoutInternal() {
     }
 
     // 2. Xác nhận thanh toán
-    // Tính tổng tiền (Client side estimate)
     const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-    // Lấy mã voucher (nếu chưa có ô này trong HTML thì phải thêm dấu ? vào trước .value để tránh lỗi nốt)
     const voucherEl = document.getElementById('voucher-code');
     const voucherCodeInput = voucherEl ? voucherEl.value.trim().toUpperCase() : '';
-
-    // --- ĐÃ XÓA DÒNG paymentMethod GÂY LỖI TẠI ĐÂY ---
 
     const itemsToSend = cartItems.map(item => ({
         product_id: item.id,
@@ -610,25 +617,30 @@ function handleCheckoutInternal() {
         items: itemsToSend,
         voucher_code: voucherCodeInput,
         discount_percent: currentDiscountPercent,
-        
-        // Code của bạn đã dùng biến toàn cục này rồi, nên dòng paymentMethod bị xóa ở trên là thừa
         payment_method: currentPaymentMethod 
     };
 
-        // 3. Gửi Request
-        fetch('../core/order_processor.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(checkoutData)
-        })
-        .then(response => {
-            if (!response.ok) throw new Error('Lỗi Server: ' + response.status);
-            return response.json();
-        })
-        .then(data => {
-            if (data.success === false) {
-                showCustomAlert(`LỖI: ${data.message}`);
-                return;
+    // 3. Gửi Request
+    fetch('../core/order_processor.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(checkoutData)
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Lỗi Server: ' + response.status);
+        return response.json();
+    })
+    .then(data => {
+        if (data.success === false) {
+            showCustomAlert(`LỖI: ${data.message}`);
+            return;
+        } 
+        else if (data.success === true) {
+            showCustomAlert("Thanh toán thành công!", "success");
+
+            // --- [THÊM MỚI: Báo màn hình khách cảm ơn] ---
+            if (typeof customerChannel !== 'undefined') {
+                customerChannel.postMessage({ type: 'SUCCESS' });
             }
 
             // === PHẦN 1: CẬP NHẬT KHO CLIENT ===
@@ -643,7 +655,9 @@ function handleCheckoutInternal() {
                         });
                     }
                 });
-            } catch (e) { console.warn("Lỗi update kho client:", e); }
+            } catch (e) { 
+                console.warn("Lỗi update kho client:", e); 
+            }
 
             // === PHẦN 2: CHUẨN BỊ IN HÓA ĐƠN ===
             const invoiceDiv = document.getElementById('invoice-pos');
@@ -658,37 +672,34 @@ function handleCheckoutInternal() {
             
             // B. Điền danh sách món
             const printBody = document.getElementById('print-items-body');
-            printBody.innerHTML = ''; 
-            
-            cartItems.forEach(item => {
-                const noteDisplay = item.note ? `<br><small class="fst-italic">(${item.note})</small>` : '';
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="text-start" style="width: 40%">${item.name} ${noteDisplay}</td>
-                    <td class="text-center" style="width: 15%">${item.quantity}</td>
-                    <td class="text-end" style="width: 20%">${Number(item.price).toLocaleString('vi-VN')}</td>
-                    <td class="text-end fw-bold" style="width: 25%">${(item.price * item.quantity).toLocaleString('vi-VN')}</td>
-                `;
-                printBody.appendChild(tr);
-            });
-            // C. ĐIỀN TỔNG TIỀN & VOUCHER (GIAO DIỆN MỚI GỌN GÀNG)
-            const totalOriginal = Number(data.total_original); 
-            const finalAmount = Number(data.final_amount);     
-            const discountPercent = Number(data.discount_percent);
+            if (printBody) {
+                printBody.innerHTML = ''; 
+                cartItems.forEach(item => {
+                    const noteDisplay = item.note ? `<br><small class="fst-italic">(${item.note})</small>` : '';
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="text-start" style="width: 40%">${item.name} ${noteDisplay}</td>
+                        <td class="text-center" style="width: 15%">${item.quantity}</td>
+                        <td class="text-end" style="width: 20%">${Number(item.price).toLocaleString('vi-VN')}</td>
+                        <td class="text-end fw-bold" style="width: 25%">${(item.price * item.quantity).toLocaleString('vi-VN')}</td>
+                    `;
+                    printBody.appendChild(tr);
+                });
+            }
+
+            // C. ĐIỀN TỔNG TIỀN & VOUCHER
+            const totalOriginal = Number(data.total_original || 0); 
+            const finalAmount = Number(data.final_amount || 0);     
+            const discountPercent = Number(data.discount_percent || 0);
             const discountAmount = totalOriginal - finalAmount;
 
-            // Xây dựng các dòng HTML
-            let footerHtml = '';
-
-            // Dòng 1: Tổng tiền hàng (Luôn hiện)
-            footerHtml += `
+            let footerHtml = `
                 <div class="bill-row">
                     <span class="bill-label">Tổng tiền hàng:</span>
                     <span>${totalOriginal.toLocaleString('vi-VN')}</span>
                 </div>
             `;
 
-            // Dòng 2: Voucher/Giảm giá (Chỉ hiện nếu có giảm)
             if (discountPercent > 0) {
                 const codeDisplay = voucherCodeInput ? `(${voucherCodeInput})` : '';
                 footerHtml += `
@@ -699,7 +710,6 @@ function handleCheckoutInternal() {
                 `;
             }
 
-            // Dòng 3: Thành tiền (Chốt hạ)
             footerHtml += `
                 <div class="bill-row final">
                     <span class="bill-label">THANH TOÁN:</span>
@@ -707,11 +717,10 @@ function handleCheckoutInternal() {
                 </div>
             `;
 
-            // Render vào thẻ div
-            document.getElementById('print-total').innerHTML = footerHtml;
+            const printTotalEl = document.getElementById('print-total');
+            if (printTotalEl) printTotalEl.innerHTML = footerHtml;
             
-
-            // D. Tạo Tem Sticker (Giữ nguyên)
+            // D. Tạo Tem Sticker
             if (stickerContainer) {
                 stickerContainer.innerHTML = '';
                 cartItems.forEach(item => {
@@ -735,32 +744,34 @@ function handleCheckoutInternal() {
             // === PHẦN 3: DỌN DẸP ===
             cartItems = [];
             localStorage.removeItem(CART_STORAGE_KEY);
-            // Reset input voucher
-            document.getElementById('voucher-code').value = '';
-            document.getElementById('discount-display').textContent = '0%';
+            
+            if (voucherEl) voucherEl.value = '';
+            const discDisp = document.getElementById('discount-display');
+            if (discDisp) discDisp.textContent = '0%';
             currentDiscountPercent = 0;
 
             renderCart();
             updateTotalAmount();
             updateProductAvailability();
             
-            if (typeof order_id !== 'undefined') order_id.textContent = Number(data.order_id) + 1;
+            const nextOrderIdEl = document.getElementById('order_id');
+            if (nextOrderIdEl) nextOrderIdEl.textContent = Number(data.order_id) + 1;
 
             // === PHẦN 4: IN ẤN ===
-            showCustomAlert(`Thanh toán thành công! Đơn hàng #${data.order_id}`);
-            
             if(invoiceDiv) invoiceDiv.classList.remove('d-none');
             if(stickerContainer) stickerContainer.classList.remove('d-none');
             
             setTimeout(() => {
-                performDualPrinting();
+                if (typeof performDualPrinting === 'function') {
+                    performDualPrinting();
+                }
             }, 500);
-        })
-        .catch(error => {
-            console.error('LỖI AJAX:', error);
-            showCustomAlert('Đã xảy ra lỗi kết nối: ' + error.message);
-        });
-    
+        }
+    })
+    .catch(error => {
+        console.error('LỖI AJAX:', error);
+        showCustomAlert('Đã xảy ra lỗi kết nối: ' + error.message);
+    });
 }
 function handleCancel() {
     if (cartItems.length === 0) {
@@ -1306,6 +1317,7 @@ function setPaymentMethod(method) {
     } else {
         // Nếu chọn tiền mặt -> Reset validation
         calculateChange(0); // Tính lại tiền thừa
+        customerChannel.postMessage({ type: 'RESET' }); // Ẩn QR bên khách đi cho đỡ nhầm
     }
 }
 
@@ -1336,6 +1348,11 @@ function generateVietQR(amount) {
         loadEl.classList.add('d-none');
         imgEl.style.display = 'inline-block';
     };
+    customerChannel.postMessage({
+        type: 'SHOW_QR',
+        url: qrUrl,
+        amount: amount
+    });
 }
 
 // 4. Logic tính tiền thừa (Như cũ)

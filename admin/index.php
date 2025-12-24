@@ -33,13 +33,15 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
 
       /* CSS cho nút chọn danh mục */
       .category-selector { display: flex; gap: 15px; margin-bottom: 10px; }
-      .btn-category {
-          flex: 1; padding: 15px; border: none; border-radius: 12px; background: white; color: #555; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; border: 2px solid transparent;
-      }
+      .btn-category { flex: 1; padding: 15px; border: none; border-radius: 12px; background: white; color: #555; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; border: 2px solid transparent; }
       .btn-category i { margin-right: 10px; font-size: 1.4rem; }
       .btn-category:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
       .btn-category.active[data-type="drink"] { background: linear-gradient(135deg, #3c8dbc, #2980b9); color: white; box-shadow: 0 4px 10px rgba(60, 141, 188, 0.4); }
       .btn-category.active[data-type="food"] { background: linear-gradient(135deg, #e67e22, #d35400); color: white; box-shadow: 0 4px 10px rgba(230, 126, 34, 0.4); }
+
+      /* CSS cho cảnh báo kho */
+      .low-stock-row { background-color: #ffe6e6 !important; color: #dc3545; font-weight: bold; }
+      .low-stock-row input { border-color: #dc3545; color: #dc3545; }
   </style>
 </head>
 <body class="hold-transition sidebar-mini">
@@ -60,9 +62,9 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
   </nav>
 
   <aside class="main-sidebar sidebar-dark-primary elevation-4">
-    <a href="index.php" class="brand-link">
-      <img src="./assets/dist/img/logo.png" alt="Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
-      <span class="brand-text font-weight-light font-weight-bold">Coffee Ng Văn</span>
+    <a href="javascript:void(0)" class="brand-link">
+      <img src="../assets/dist/img/logo coffee.png" alt="Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+      <span class="brand-text font-weight-light">Coffee Nguyễn Văn</span>
     </a>
 
     <div class="sidebar">
@@ -72,6 +74,8 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
             <ul class="nav nav-treeview">
               <li class="nav-item"><a href="javascript:void(0)" class="nav-link active" id="link-menu" onclick="chuyenCheDo('menu')"><i class="fas fa-coffee nav-icon"></i><p>Danh sách món</p></a></li>
               <li class="nav-item"><a href="javascript:void(0)" class="nav-link" id="link-order" onclick="chuyenCheDo('order')"><i class="fas fa-file-invoice-dollar nav-icon"></i><p>Quản lý Đơn hàng</p></a></li>
+              <li class="nav-item"><a href="javascript:void(0)" class="nav-link" id="link-warehouse" onclick="chuyenCheDo('warehouse')"><i class="fas fa-boxes nav-icon"></i><p>Kho Nguyên Liệu <span class="badge badge-danger right" id="badge-warning" style="display:none">!</span></p></a></li>
+              
               <li class="nav-item"><a href="javascript:void(0)" class="nav-link" id="link-voucher" onclick="chuyenCheDo('voucher')"><i class="fas fa-ticket-alt nav-icon"></i><p>Mã giảm giá</p></a></li>
               <li class="nav-item"><a href="javascript:void(0)" class="nav-link" id="link-schedule" onclick="chuyenCheDo('schedule')"><i class="fas fa-calendar-alt nav-icon"></i><p>Quản lý Phân ca</p></a></li>
               <li class="nav-item"><a href="javascript:void(0)" class="nav-link" id="link-report" onclick="chuyenCheDo('report')"><i class="fas fa-chart-bar nav-icon"></i><p>Báo cáo doanh thu</p></a></li>
@@ -85,6 +89,14 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
   </aside>
 
   <div class="content-wrapper">
+    <div id="alert-stock-container" class="p-3" style="display:none;">
+        <div class="alert alert-warning alert-dismissible">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+            <h5><i class="icon fas fa-exclamation-triangle"></i> Cảnh báo hết nguyên liệu!</h5>
+            <ul id="list-low-stock" class="mb-0"></ul>
+        </div>
+    </div>
+
     <div class="content-header">
       <div class="container-fluid">
         <div class="row mb-2 align-items-center">
@@ -123,6 +135,30 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
         
         <div id="hienthi-sanpham"></div>
 
+        <div id="hienthi-warehouse" class="mode-section">
+            <div class="card">
+                <div class="card-header bg-navy">
+                    <h3 class="card-title">Tình trạng kho hàng & Cài đặt cảnh báo</h3>
+                </div>
+                <div class="card-body table-responsive p-0">
+                    <table class="table table-hover text-nowrap">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tên nguyên liệu</th>
+                                <th>Đơn vị</th>
+                                <th>Tồn kho hiện tại</th>
+                                <th>Mức cảnh báo (Min)</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="warehouse-table-body">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <div id="hienthi-baocao" class="mode-section">
             <div class="row">
                 <div class="col-12 col-sm-6 col-md-3">
@@ -151,29 +187,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
                 </div>
             </div>
             <div class="row"><div class="col-md-12"><div class="card"><div class="card-body"><canvas id="revenue-chart" height="250"></canvas></div></div></div></div>
-            
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body table-responsive p-0" style="height: 300px;">
-                            <table class="table table-head-fixed text-nowrap">
-                                <thead>
-                                    <tr>
-                                        <th>Mã đơn</th>
-                                        <th>Thời gian</th>
-                                        <th>Nhân viên</th>
-                                        <th class="text-right">Doanh thu</th>
-                                        <th class="text-right">Giá vốn (Est)</th>
-                                        <th class="text-right">Lợi nhuận</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="rpt-table-body">
-                                    </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <div class="row"><div class="col-12"><div class="card"><div class="card-body table-responsive p-0" style="height: 300px;"><table class="table table-head-fixed text-nowrap"><thead><tr><th>Mã đơn</th><th>Thời gian</th><th>Nhân viên</th><th class="text-right">Thành tiền</th></tr></thead><tbody id="rpt-table-body"></tbody></table></div></div></div></div>
         </div>
 
         <div id="hienthi-schedule" class="mode-section">
@@ -253,7 +267,8 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
         $('#report_end').val(rptEnd);
         $('#report_start').val(currentWeekStart);
 
-        taiNoiDung();
+        taiNoiDung(); // Mặc định vào sẽ tải danh sách món (để kích hoạt check alert luôn)
+        taiNguyenLieu(); // Load ngầm nguyên liệu để check cảnh báo ngay khi vào trang
         loadIngredients();
         updateSelectUsers(); 
         $('#searchInput').on('keyup', function(){ taiNoiDung(); });
@@ -269,13 +284,16 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
         $('#searchInput').val('');
         $('.nav-link').removeClass('active');
         $('.mode-section').hide();
-        $('#hienthi-sanpham, #hienthi-baocao, #hienthi-schedule').hide();
+        $('#hienthi-sanpham, #hienthi-baocao, #hienthi-schedule, #hienthi-warehouse').hide();
         $('#searchForm').show();
+        $('#alert-stock-container').hide(); // Mặc định ẩn alert, chỉ hiện khi cần
 
         if(mode == 'menu') {
             $('#link-menu').addClass('active'); $('#page-title').text('Danh sách món'); 
             $('#btn-group-menu').show(); $('#cat-selector-group').show();
             $('#hienthi-sanpham').show(); taiNoiDung();
+            // Show alert nếu có ở trang chủ
+            checkLowStockAlert();
         } else if(mode == 'user') {
             $('#link-user').addClass('active'); $('#page-title').text('Quản lý nhân viên'); $('#btn-group-user').show(); $('#hienthi-sanpham').show(); taiNoiDung();
         } else if(mode == 'order') {
@@ -286,6 +304,10 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
             $('#link-report').addClass('active'); $('#page-title').text('Báo cáo doanh thu'); $('#searchForm').hide(); $('#report-controls').show(); $('#hienthi-baocao').show(); taiBaoCao();
         } else if(mode == 'schedule') {
             $('#link-schedule').addClass('active'); $('#page-title').text('Lịch làm việc'); $('#searchForm').hide(); $('#btn-group-schedule').show(); $('#hienthi-schedule').show(); taiLichLamViec();
+        } else if(mode == 'warehouse') {
+            $('#link-warehouse').addClass('active'); $('#page-title').text('Kho Nguyên Liệu'); $('#searchForm').hide(); 
+            $('#hienthi-warehouse').show(); 
+            taiNguyenLieu();
         }
     };
 
@@ -299,52 +321,101 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
         taiNoiDung();
     };
 
-    // --- LOGIC BÁO CÁO (ĐÃ CẬP NHẬT) ---
-    window.locBaoCao = function(e) { 
-        if(e) e.preventDefault(); 
-        taiBaoCao(); 
+    // --- LOGIC KHO NGUYÊN LIỆU (MỚI) ---
+    window.taiNguyenLieu = function() {
+        $.ajax({
+            url: 'api/get_ingredients.php',
+            type: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                var html = '';
+                var lowStockItems = [];
+                
+                data.forEach(function(item) {
+                    var min = parseFloat(item.min_quantity) || 5;
+                    var qty = parseFloat(item.quantity);
+                    var alertClass = (qty <= min) ? 'low-stock-row' : '';
+                    
+                    if (qty <= min) {
+                        lowStockItems.push(item.name + ' (Còn: ' + qty + ' ' + item.unit + ')');
+                    }
+
+                    html += `<tr class="${alertClass}">
+                        <td>${item.id}</td>
+                        <td>${item.name}</td>
+                        <td>${item.unit}</td>
+                        <td><strong>${qty}</strong></td>
+                        <td style="width: 200px;">
+                            <div class="input-group input-group-sm">
+                                <input type="number" step="0.1" class="form-control" id="min_qty_${item.id}" value="${min}">
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-secondary" onclick="capNhatMin(${item.id})"><i class="fas fa-save"></i></button>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="badge ${qty <= min ? 'badge-danger' : 'badge-success'}">${qty <= min ? 'Sắp hết' : 'Ổn định'}</span></td>
+                    </tr>`;
+                });
+                
+                $('#warehouse-table-body').html(html);
+                
+                // Cập nhật Alert trên Dashboard và Badge Menu
+                if (lowStockItems.length > 0) {
+                    var alertHtml = '';
+                    lowStockItems.forEach(i => alertHtml += `<li>${i}</li>`);
+                    $('#list-low-stock').html(alertHtml);
+                    $('#badge-warning').show();
+                    
+                    // Chỉ hiện alert to nếu đang ở trang chủ (menu)
+                    if(currentMode == 'menu') $('#alert-stock-container').show();
+                } else {
+                    $('#badge-warning').hide();
+                    $('#alert-stock-container').hide();
+                }
+            }
+        });
     }
 
+    // Hàm phụ để check alert mà không render bảng (dùng khi mới vào trang)
+    function checkLowStockAlert() {
+        if ($('#list-low-stock').children().length > 0) {
+            $('#alert-stock-container').show();
+        }
+    }
+
+    window.capNhatMin = function(id) {
+        var val = $('#min_qty_'+id).val();
+        $.ajax({
+            url: 'api/update_ingredient_min.php',
+            type: 'POST',
+            data: {id: id, min_quantity: val},
+            dataType: 'json',
+            success: function(res) {
+                if(res.status == 'success') {
+                    alert('Đã lưu mức cảnh báo mới!');
+                    taiNguyenLieu(); // Load lại để cập nhật màu sắc
+                } else {
+                    alert(res.message);
+                }
+            }
+        });
+    }
+
+    // --- LOGIC BÁO CÁO ---
+    window.locBaoCao = function(e) { e.preventDefault(); taiBaoCao(); }
     window.taiBaoCao = function() {
         var start = $('#report_start').val();
         var end = $('#report_end').val();
-        
-        $('#rpt-table-body').html('<tr><td colspan="6" class="text-center">Đang tải dữ liệu...</td></tr>');
-
         $.ajax({
-            url: 'api/get_report_stats.php',
-            type: 'GET',
-            data: {start: start, end: end},
-            dataType: 'json',
+            url: 'api/get_report_stats.php', type: 'GET', data: {start: start, end: end}, dataType: 'json',
             success: function(res) {
-                if (res.status === 'error') {
-                    alert(res.message); 
-                    $('#rpt-table-body').html('<tr><td colspan="6" class="text-center text-danger">Có lỗi xảy ra.</td></tr>');
-                    return;
-                }
-
                 var fmt = new Intl.NumberFormat('vi-VN');
-                
-                // Cập nhật số liệu tổng quan
                 $('#rpt-revenue').text(fmt.format(res.summary.revenue) + ' đ');
                 $('#rpt-cogs').text(fmt.format(res.summary.cogs) + ' đ');
                 $('#rpt-profit').text(fmt.format(res.summary.profit) + ' đ');
                 $('#rpt-orders').text(res.summary.orders);
-                
-                // Cập nhật bảng dữ liệu (Sử dụng res.html từ API)
-                $('#rpt-table-body').html(res.html);
-                
-                // Cập nhật biểu đồ (Nếu API có trả về chart)
-                if(res.chart) {
-                    renderChart(res.chart.labels, res.chart.data);
-                } else {
-                    // Xóa biểu đồ cũ nếu không có dữ liệu mới
-                    if(myChart) { myChart.destroy(); }
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error(xhr.responseText);
-                alert('Lỗi khi tải báo cáo.');
+                $('#rpt-table-body').html(res.table);
+                renderChart(res.chart.labels, res.chart.data);
             }
         });
     }
@@ -365,7 +436,6 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
         for(var i=0; i<7; i++) {
             var d = new Date(start); d.setDate(start.getDate() + i); $('#d-'+i).text(formatDate(d));
             var dateStr = d.toISOString().split('T')[0];
-            // Thêm nút cho cả 3 ca
             $('#cell-morning-'+i).append(`<button class="btn btn-outline-primary btn-xs btn-add-shift" onclick="openAddShift('${dateStr}', 'morning')">+ Thêm</button>`);
             $('#cell-afternoon-'+i).append(`<button class="btn btn-outline-primary btn-xs btn-add-shift" onclick="openAddShift('${dateStr}', 'afternoon')">+ Thêm</button>`);
             $('#cell-evening-'+i).append(`<button class="btn btn-outline-primary btn-xs btn-add-shift" onclick="openAddShift('${dateStr}', 'evening')">+ Thêm</button>`);
@@ -389,48 +459,25 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
     }
     
     function luuPhanCa(e, forceUnlock = false) {
-    if(e) e.preventDefault(); 
-
-    var formData = $('#formSchedule').serializeArray();
-    if (forceUnlock) {
-        formData.push({name: 'force_unlock', value: 'true'});
+        if(e) e.preventDefault(); 
+        var formData = $('#formSchedule').serializeArray();
+        if (forceUnlock) { formData.push({name: 'force_unlock', value: 'true'}); }
+        $.ajax({
+            url: 'api/add_schedule.php', type: 'POST', data: formData, dataType: 'json',
+            success: function(res) {
+                if(res.status == 'success') { $('#modalAddSchedule').modal('hide'); alert(res.message); autoUpdateStatus(); taiLichLamViec(); } 
+                else if (res.status == 'locked_user') {
+                    if (confirm(res.message)) { luuPhanCa(null, true); }
+                } 
+                else { alert(res.message); }
+            },
+            error: function() { alert('Lỗi kết nối server.'); }
+        });
     }
-
-    $.ajax({
-        url: 'api/add_schedule.php',
-        type: 'POST',
-        data: formData,
-        dataType: 'json',
-        success: function(res) {
-            if(res.status == 'success') {
-                $('#modalAddSchedule').modal('hide');
-                alert(res.message);
-                
-                // --- THÊM DÒNG NÀY ---
-                // Gọi API cập nhật trạng thái ngay lập tức
-                autoUpdateStatus(); 
-                // --------------------
-
-                taiLichLamViec(); 
-            } 
-            else if (res.status == 'locked_user') {
-                if (confirm(res.message)) {
-                    luuPhanCa(null, true); 
-                }
-            } 
-            else { 
-                alert(res.message); 
-            }
-        },
-        error: function() {
-            alert('Lỗi kết nối server.');
-        }
-    });
-}
-    function xoaCa(id) { if(confirm("Xóa?")) $.ajax({ url: 'api/delete_schedule.php', type: 'POST', data: {id: id}, success: function(){ taiLichLamViec(); } }); }
+    function xoaCa(id) { if(confirm("Xóa?")) $.ajax({ url: 'api/delete_schedule.php', type: 'POST', data: {id: id}, success: function(){ autoUpdateStatus(); taiLichLamViec(); } }); }
     function formatDate(d) { return d.getDate()+'/'+(d.getMonth()+1); }
     window.taiNoiDung = function() {
-        if(currentMode == 'report' || currentMode == 'schedule') return;
+        if(currentMode == 'report' || currentMode == 'schedule' || currentMode == 'warehouse') return;
         var k = $('#searchInput').val(); var url='', d={search: k};
         if (currentMode == 'menu') { url='api/get_items.php'; d.category=currentCategory; } 
         else if (currentMode == 'user') url='api/get_users.php';

@@ -17,7 +17,7 @@ $i++;
 
 /* Authentication type and info */
 $cfg['Servers'][$i]['auth_type'] = 'cookie';
-$cfg['Servers'][$i]['user'] = 'root';
+$cfg['Servers'][$i]['user'] = 'coffee';
 $cfg['Servers'][$i]['password'] = '123456';
 $cfg['Servers'][$i]['extension'] = 'mysqli';
 $cfg['Servers'][$i]['AllowNoPassword'] = true;

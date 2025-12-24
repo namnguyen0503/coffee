@@ -60,6 +60,11 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
   </nav>
 
   <aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <a href="index.php" class="brand-link">
+      <img src="./assets/dist/img/logo.png" alt="Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+      <span class="brand-text font-weight-light font-weight-bold">Coffee Ng Văn</span>
+    </a>
+
     <div class="sidebar">
       <nav class="mt-2">
         <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
@@ -146,7 +151,29 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
                 </div>
             </div>
             <div class="row"><div class="col-md-12"><div class="card"><div class="card-body"><canvas id="revenue-chart" height="250"></canvas></div></div></div></div>
-            <div class="row"><div class="col-12"><div class="card"><div class="card-body table-responsive p-0" style="height: 300px;"><table class="table table-head-fixed text-nowrap"><thead><tr><th>Mã đơn</th><th>Thời gian</th><th>Nhân viên</th><th class="text-right">Thành tiền</th></tr></thead><tbody id="rpt-table-body"></tbody></table></div></div></div></div>
+            
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body table-responsive p-0" style="height: 300px;">
+                            <table class="table table-head-fixed text-nowrap">
+                                <thead>
+                                    <tr>
+                                        <th>Mã đơn</th>
+                                        <th>Thời gian</th>
+                                        <th>Nhân viên</th>
+                                        <th class="text-right">Doanh thu</th>
+                                        <th class="text-right">Giá vốn (Est)</th>
+                                        <th class="text-right">Lợi nhuận</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="rpt-table-body">
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div id="hienthi-schedule" class="mode-section">
@@ -272,26 +299,57 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
         taiNoiDung();
     };
 
-    // --- LOGIC BÁO CÁO ---
-    window.locBaoCao = function(e) { e.preventDefault(); taiBaoCao(); }
+    // --- LOGIC BÁO CÁO (ĐÃ CẬP NHẬT) ---
+    window.locBaoCao = function(e) { 
+        if(e) e.preventDefault(); 
+        taiBaoCao(); 
+    }
+
     window.taiBaoCao = function() {
         var start = $('#report_start').val();
         var end = $('#report_end').val();
+        
+        $('#rpt-table-body').html('<tr><td colspan="6" class="text-center">Đang tải dữ liệu...</td></tr>');
+
         $.ajax({
-            url: 'api/get_report_stats.php', type: 'GET', data: {start: start, end: end}, dataType: 'json',
+            url: 'api/get_report_stats.php',
+            type: 'GET',
+            data: {start: start, end: end},
+            dataType: 'json',
             success: function(res) {
+                if (res.status === 'error') {
+                    alert(res.message); 
+                    $('#rpt-table-body').html('<tr><td colspan="6" class="text-center text-danger">Có lỗi xảy ra.</td></tr>');
+                    return;
+                }
+
                 var fmt = new Intl.NumberFormat('vi-VN');
+                
+                // Cập nhật số liệu tổng quan
                 $('#rpt-revenue').text(fmt.format(res.summary.revenue) + ' đ');
                 $('#rpt-cogs').text(fmt.format(res.summary.cogs) + ' đ');
                 $('#rpt-profit').text(fmt.format(res.summary.profit) + ' đ');
                 $('#rpt-orders').text(res.summary.orders);
-                $('#rpt-table-body').html(res.table);
-                renderChart(res.chart.labels, res.chart.data);
+                
+                // Cập nhật bảng dữ liệu (Sử dụng res.html từ API)
+                $('#rpt-table-body').html(res.html);
+                
+                // Cập nhật biểu đồ (Nếu API có trả về chart)
+                if(res.chart) {
+                    renderChart(res.chart.labels, res.chart.data);
+                } else {
+                    // Xóa biểu đồ cũ nếu không có dữ liệu mới
+                    if(myChart) { myChart.destroy(); }
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error(xhr.responseText);
+                alert('Lỗi khi tải báo cáo.');
             }
         });
     }
 
-    // --- LOGIC LỊCH LÀM VIỆC (ĐÃ CẬP NHẬT) ---
+    // --- LOGIC LỊCH LÀM VIỆC ---
     function taiLichLamViec() {
         $.ajax({
             url: 'api/get_schedules.php', type: 'GET', data: {start_date: currentWeekStart}, dataType: 'json',

@@ -138,7 +138,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
         <div id="hienthi-warehouse" class="mode-section">
             <div class="card">
                 <div class="card-header bg-navy">
-                    <h3 class="card-title">Tình trạng kho hàng & Cài đặt cảnh báo</h3>
+                    
                 </div>
                 <div class="card-body table-responsive p-0">
                     <table class="table table-hover text-nowrap">

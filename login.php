@@ -86,9 +86,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     // Phân quyền chuyển hướng (Tùy chỉnh nếu cần)
                     if ($user['role'] == 'admin') {
-                        header("Location: admin/index.php");
+                        header("Location: index.php");
                     } else {
-                        header("Location: pos/index.php"); // Hoặc index.php tùy cấu trúc của bạn
+                        header("Location: index.php"); // Hoặc index.php tùy cấu trúc của bạn
                     }
                     exit;
                 }

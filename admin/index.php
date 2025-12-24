@@ -63,8 +63,8 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
 
   <aside class="main-sidebar sidebar-dark-primary elevation-4">
     <a href="javascript:void(0)" class="brand-link">
-      <img src="../assets/dist/img/logo coffee.png" alt="Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
-      <span class="brand-text font-weight-light">Coffee Nguyễn Văn</span>
+      <img src="./assets/dist/img/logo coffee.png" alt="Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+      <span class="brand-text font-weight-light">Coffee Ng Văn</span>
     </a>
 
     <div class="sidebar">

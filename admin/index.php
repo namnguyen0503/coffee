@@ -389,21 +389,44 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
     }
     
     function luuPhanCa(e, forceUnlock = false) {
-        if(e) e.preventDefault(); 
-        var formData = $('#formSchedule').serializeArray();
-        if (forceUnlock) { formData.push({name: 'force_unlock', value: 'true'}); }
-        $.ajax({
-            url: 'api/add_schedule.php', type: 'POST', data: formData, dataType: 'json',
-            success: function(res) {
-                if(res.status == 'success') { $('#modalAddSchedule').modal('hide'); alert(res.message); taiLichLamViec(); } 
-                else if (res.status == 'locked_user') {
-                    if (confirm(res.message)) { luuPhanCa(null, true); }
-                } 
-                else { alert(res.message); }
-            },
-            error: function() { alert('Lỗi kết nối server.'); }
-        });
+    if(e) e.preventDefault(); 
+
+    var formData = $('#formSchedule').serializeArray();
+    if (forceUnlock) {
+        formData.push({name: 'force_unlock', value: 'true'});
     }
+
+    $.ajax({
+        url: 'api/add_schedule.php',
+        type: 'POST',
+        data: formData,
+        dataType: 'json',
+        success: function(res) {
+            if(res.status == 'success') {
+                $('#modalAddSchedule').modal('hide');
+                alert(res.message);
+                
+                // --- THÊM DÒNG NÀY ---
+                // Gọi API cập nhật trạng thái ngay lập tức
+                autoUpdateStatus(); 
+                // --------------------
+
+                taiLichLamViec(); 
+            } 
+            else if (res.status == 'locked_user') {
+                if (confirm(res.message)) {
+                    luuPhanCa(null, true); 
+                }
+            } 
+            else { 
+                alert(res.message); 
+            }
+        },
+        error: function() {
+            alert('Lỗi kết nối server.');
+        }
+    });
+}
     function xoaCa(id) { if(confirm("Xóa?")) $.ajax({ url: 'api/delete_schedule.php', type: 'POST', data: {id: id}, success: function(){ taiLichLamViec(); } }); }
     function formatDate(d) { return d.getDate()+'/'+(d.getMonth()+1); }
     window.taiNoiDung = function() {

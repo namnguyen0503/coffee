@@ -171,7 +171,7 @@ if ($role === 'wh-staff') $role_label = 'Thủ kho';
                 <div class="card-body">
                     <i class="fa-solid fa-chart-line card-icon"></i>
                     <h3>Quản Trị</h3>
-                    <p>Thực đơn & Doanh thu</p>
+                    <p>Quản lý & Doanh thu</p>
                 </div>
             </a>
         </div>

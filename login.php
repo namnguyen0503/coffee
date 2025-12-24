@@ -7,10 +7,9 @@ require_once './includes/db_connection.php';
 // 2. Khai báo sử dụng biến toàn cục $mysqli
 global $mysqli;
 
-// --- PHẦN MỚI: TỰ ĐỘNG CẬP NHẬT TRẠNG THÁI CA LÀM VIỆC (LOGIC TIMEZONE) ---
-// Giúp đảm bảo dữ liệu status_work luôn đúng theo giờ thực tế khi nhân viên bấm vào trang
+// --- PHẦN TỰ ĐỘNG CẬP NHẬT TRẠNG THÁI CA LÀM VIỆC ---
 if ($mysqli) {
-    date_default_timezone_set('Asia/Ho_Chi_Minh'); // Quan trọng: Set giờ VN
+    date_default_timezone_set('Asia/Ho_Chi_Minh'); 
     
     $cur_date = date('Y-m-d');
     $cur_hour = (int)date('H');
@@ -29,10 +28,9 @@ if ($mysqli) {
         }
     }
 
-    // Bước A: Reset tất cả nhân viên về trạng thái nghỉ (0)
+    // Reset và cập nhật trạng thái làm việc
     $mysqli->query("UPDATE users SET status_work = 0");
 
-    // Bước B: Nếu đang trong giờ làm việc, bật trạng thái (1) cho người có lịch
     if ($shift) {
         $stmt_update = $mysqli->prepare("
             UPDATE users u
@@ -55,12 +53,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username']);
     $password = $_POST['password'];
 
-    // Kiểm tra kết nối
     if (!$mysqli) {
-        die("Lỗi: Biến kết nối CSDL (\$mysqli) bị null. Vui lòng kiểm tra file db_connection.php");
+        die("Lỗi: Biến kết nối CSDL (\$mysqli) bị null.");
     }
 
-    // 3. Sửa câu lệnh SELECT: Lấy thêm cột status_work để kiểm tra
+    // Lấy thông tin user
     $stmt = $mysqli->prepare("SELECT id, fullname, password, role, status_work FROM users WHERE username = ? AND status = 1");
     
     if ($stmt) {
@@ -74,9 +71,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Kiểm tra mật khẩu
             if (password_verify($password, $user['password'])) {
                 
-                // --- PHẦN MỚI: KIỂM TRA status_work ---
-                // Nếu không phải Admin VÀ status_work là 0 -> Chặn lại
-                if ($user['role'] !== 'admin' && $user['status_work'] == 0) {
+                // --- KIỂM TRA LỊCH LÀM VIỆC (ĐÃ SỬA) ---
+                // Điều kiện chặn:
+                // 1. Không phải Admin
+                // 2. VÀ Không phải Thủ kho (wh-staff)
+                // 3. VÀ Không có lịch (status_work = 0)
+                
+                if ($user['role'] !== 'admin' && $user['role'] !== 'wh-staff' && $user['status_work'] == 0) {
                     $error = "Bạn KHÔNG CÓ LỊCH làm việc vào giờ này (" . date('H:i') . ")!";
                 } else {
                     // Đăng nhập thành công -> Lưu session
@@ -84,15 +85,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['fullname'] = $user['fullname'];
                     $_SESSION['role'] = $user['role'];
                     
-                    // Phân quyền chuyển hướng (Tùy chỉnh nếu cần)
+                    // --- PHÂN QUYỀN CHUYỂN HƯỚNG ---
                     if ($user['role'] == 'admin') {
                         header("Location: admin/index.php");
+                    } elseif ($user['role'] == 'wh-staff') {
+                        // Thủ kho vào trang kho
+                        header("Location: warehouse/index.php");
                     } else {
-                        header("Location: pos/index.php"); // Hoặc index.php tùy cấu trúc của bạn
+                        // Nhân viên bán hàng vào POS
+                        header("Location: pos/index.php");
                     }
                     exit;
                 }
-                // ---------------------------------------
 
             } else {
                 $error = "Mật khẩu không đúng!";

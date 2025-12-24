@@ -87,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     // --- PHÂN QUYỀN CHUYỂN HƯỚNG ---
                     if ($user['role'] == 'admin') {
-                        header("Location: admin/index.php");
+                        header("Location: index.php");
                     } elseif ($user['role'] == 'wh-staff') {
                         // Thủ kho vào trang kho
                         header("Location: warehouse/index.php");

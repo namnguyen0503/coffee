@@ -2,7 +2,7 @@
 session_start();
 
 // 1. Kiểm tra đăng nhập
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['user_id'])|| !in_array($_SESSION['role'], ['admin'])) {
     header("Location: login.php");
     exit;
 }
@@ -202,6 +202,71 @@ if ($role === 'wh-staff') $role_label = 'Thủ kho';
         window.location.href = 'logout.php';
     });
 }
+</script>
+<div id="origin-signature" 
+     style="position: fixed; bottom: 30px; left: 0; width: 100%; text-align: center;
+            font-family: 'Segoe UI', sans-serif; font-size: 14px; color: #888;
+            opacity: 0; pointer-events: none; transition: opacity 1.5s ease-in-out; z-index: 99999;
+            letter-spacing: 1px;">
+    
+    Built with <i class="fa-solid fa-heart" style="color: #ff4d6d; animation: heartbeat 1.5s infinite;"></i> for 
+    
+    <span style="color: #ebcade; font-weight: 700; text-shadow: 0 0 5px rgba(235, 202, 222, 0.5);">
+        Elysia
+    </span>
+    
+    <span style="margin: 0 5px;">&</span>
+    
+    <span style="color: #f7d1de; font-weight: 700; text-shadow: 0 0 8px rgba(247, 209, 222, 0.8);">
+        Cyrene
+    </span>
+</div>
+
+<style>
+    @keyframes heartbeat {
+        0% { transform: scale(1); }
+        15% { transform: scale(1.3); }
+        30% { transform: scale(1); }
+        45% { transform: scale(1.15); }
+        60% { transform: scale(1); }
+    }
+</style>
+
+<script>
+    (function() {
+        const secret = "origin"; // Mật mã kích hoạt
+        let input = "";
+        const signature = document.getElementById('origin-signature');
+        let hideTimer;
+
+        document.addEventListener('keydown', (e) => {
+            // Chỉ bắt các phím chữ cái để tránh nhiễu
+            if (e.key.length === 1 && e.key.match(/[a-z]/i)) {
+                input += e.key.toLowerCase();
+                
+                // Giới hạn bộ nhớ đệm
+                if (input.length > 20) input = input.slice(-secret.length);
+
+                // Kiểm tra mật mã
+                if (input.includes(secret)) {
+                    showSignature();
+                    input = ""; // Reset
+                }
+            }
+        });
+
+        function showSignature() {
+            signature.style.opacity = "1";
+            
+            // Nếu đang đếm ngược để ẩn thì hủy đi, đếm lại từ đầu
+            if (hideTimer) clearTimeout(hideTimer);
+            
+            // Tự động ẩn sau 6 giây (đủ để ngắm)
+            hideTimer = setTimeout(() => {
+                signature.style.opacity = "0";
+            }, 6000);
+        }
+    })();
 </script>
 </body>
 </html>

@@ -87,6 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     // --- PHÂN QUYỀN CHUYỂN HƯỚNG ---
                     if ($user['role'] == 'admin') {
+<<<<<<< HEAD
                         header("Location: admin/index.php");
                     } elseif ($user['role'] == 'wh-staff') {
                         // Thủ kho vào trang kho
@@ -94,6 +95,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     } else {
                         // Nhân viên bán hàng vào POS
                         header("Location: pos/index.php");
+=======
+                        header("Location: index.php");
+                    } else {
+                        header("Location: index.php"); // Hoặc index.php tùy cấu trúc của bạn
+>>>>>>> f10097f125a3ca11db80fa4d818af05f3ea7d1d3
                     }
                     exit;
                 }

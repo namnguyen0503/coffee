@@ -123,6 +123,30 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
         
         <div id="hienthi-sanpham"></div>
 
+        <div id="hienthi-warehouse" class="mode-section">
+            <div class="card">
+                <div class="card-header bg-navy">
+                    <h3 class="card-title">Tình trạng kho hàng & Cài đặt cảnh báo</h3>
+                </div>
+                <div class="card-body table-responsive p-0">
+                    <table class="table table-hover text-nowrap">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tên nguyên liệu</th>
+                                <th>Đơn vị</th>
+                                <th>Tồn kho hiện tại</th>
+                                <th>Mức cảnh báo (Min)</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="warehouse-table-body">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <div id="hienthi-baocao" class="mode-section">
             <div class="row">
                 <div class="col-12 col-sm-6 col-md-3">

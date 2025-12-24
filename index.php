@@ -220,6 +220,9 @@ if ($role === 'wh-staff') $role_label = 'Thủ kho';
     <span style="color: #f7d1de; font-weight: 700; text-shadow: 0 0 8px rgba(247, 209, 222, 0.8);">
         Cyrene
     </span>
+    <audio id="morse-audio" preload="auto" style="display: none;">
+    <source src="./NewPage.mp3" type="audio/mpeg">
+  </audio>
 </div>
 
 <style>
@@ -234,39 +237,71 @@ if ($role === 'wh-staff') $role_label = 'Thủ kho';
 
 <script>
     (function() {
-        const secret = "origin"; // Mật mã kích hoạt
-        let input = "";
-        const signature = document.getElementById('origin-signature');
-        let hideTimer;
+    const secret = "origin";
+    let input = "";
+    const signature = document.getElementById('origin-signature');
+    const audio = document.getElementById('morse-audio');
+    let hideTimer;
+    let isVisible = false; // Biến kiểm tra trạng thái hiện tại
 
-        document.addEventListener('keydown', (e) => {
-            // Chỉ bắt các phím chữ cái để tránh nhiễu
-            if (e.key.length === 1 && e.key.match(/[a-z]/i)) {
-                input += e.key.toLowerCase();
-                
-                // Giới hạn bộ nhớ đệm
-                if (input.length > 20) input = input.slice(-secret.length);
+    document.addEventListener('keydown', (e) => {
+        if (e.key.length === 1 && e.key.match(/[a-z]/i)) {
+            input += e.key.toLowerCase();
+            if (input.length > 20) input = input.slice(-secret.length);
 
-                // Kiểm tra mật mã
-                if (input.includes(secret)) {
-                    showSignature();
-                    input = ""; // Reset
-                }
+            if (input.includes(secret)) {
+                toggleSignature(); // Đổi sang hàm toggle (bật/tắt)
+                input = ""; 
             }
-        });
-
-        function showSignature() {
-            signature.style.opacity = "1";
-            
-            // Nếu đang đếm ngược để ẩn thì hủy đi, đếm lại từ đầu
-            if (hideTimer) clearTimeout(hideTimer);
-            
-            // Tự động ẩn sau 6 giây (đủ để ngắm)
-            hideTimer = setTimeout(() => {
-                signature.style.opacity = "0";
-            }, 6000);
         }
-    })();
+    });
+
+    function toggleSignature() {
+        if (!isVisible) {
+            // LỆNH MỞ (Bật chữ và nhạc)
+            isVisible = true;
+            signature.style.opacity = "1";
+            signature.style.pointerEvents = "auto";
+            
+            if (audio) {
+                audio.volume = 1; // Đảm bảo âm lượng tối đa khi bật lại
+                audio.currentTime = 0;
+                audio.play();
+            }
+
+            if (hideTimer) clearTimeout(hideTimer);
+            hideTimer = setTimeout(() => {
+                if (isVisible) fadeOutAndHide();
+            }, 46000);
+
+        } else {
+            // LỆNH TẮT (Nếu đang hiện thì ẩn ngay lập tức)
+            fadeOutAndHide();
+        }
+    }
+
+    function fadeOutAndHide() {
+        isVisible = false;
+        signature.style.opacity = "0";
+        signature.style.pointerEvents = "none";
+        
+        if (hideTimer) clearTimeout(hideTimer);
+
+        // Hiệu ứng Fade Out âm thanh (giảm dần trong 1.5s cùng lúc với opacity)
+        if (audio && !audio.paused) {
+            let fadeInterval = setInterval(() => {
+                if (audio.volume > 0.05) {
+                    audio.volume -= 0.05; // Giảm dần âm lượng
+                } else {
+                    audio.pause();
+                    audio.currentTime = 0;
+                    audio.volume = 1; // Reset lại âm lượng cho lần sau
+                    clearInterval(fadeInterval);
+                }
+            }, 75); // 75ms mỗi bước giảm, tổng cộng ~1.5s
+        }
+    }
+})();
 </script>
 </body>
 </html>

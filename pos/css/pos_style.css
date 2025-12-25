@@ -19,6 +19,7 @@ html {
     overflow: hidden; /* Để ảnh không bị trồi ra khỏi bo góc */
     height: 100%; /* Đảm bảo các thẻ bằng nhau */
     position: relative;
+    
 }
 
 /* Hiệu ứng khi di chuột vào món */
@@ -616,3 +617,4 @@ html {
 .fa-qrcode {
     color:#000;
 }
+

@@ -47,7 +47,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
   
   <nav class="main-header navbar navbar-expand navbar-white navbar-light">
     <ul class="navbar-nav"><li class="nav-item"><a class="nav-link" data-widget="pushmenu" href="#"><i class="fas fa-bars"></i></a></li></ul>
-    <ul class="navbar-nav ml-auto">
+    <ul class="navbar-nav ml-auto">       
       <li class="nav-item">
           <form class="form-inline" id="searchForm" onsubmit="return false;">
             <div class="input-group input-group-sm">
@@ -75,6 +75,14 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
               <li class="nav-item"><a href="javascript:void(0)" class="nav-link" id="link-voucher" onclick="chuyenCheDo('voucher')"><i class="fas fa-ticket-alt nav-icon"></i><p>Mã giảm giá</p></a></li>
               <li class="nav-item"><a href="javascript:void(0)" class="nav-link" id="link-schedule" onclick="chuyenCheDo('schedule')"><i class="fas fa-calendar-alt nav-icon"></i><p>Quản lý Phân ca</p></a></li>
               <li class="nav-item"><a href="javascript:void(0)" class="nav-link" id="link-report" onclick="chuyenCheDo('report')"><i class="fas fa-chart-bar nav-icon"></i><p>Báo cáo doanh thu</p></a></li>
+              
+              <li class="nav-item">
+                <a href="javascript:void(0)" class="nav-link" id="link-stock" onclick="chuyenCheDo('stock')">
+                    <i class="fas fa-exclamation-triangle nav-icon"></i>
+                    <p>Cảnh báo kho <span class="badge badge-danger right" id="badge-stock-sidebar" style="display:none">0</span></p>
+                </a>
+              </li>
+
               <li class="nav-item"><a href="javascript:void(0)" class="nav-link" id="link-user" onclick="chuyenCheDo('user')"><i class="fas fa-users-cog nav-icon"></i><p>Quản lý nhân viên</p></a></li>
                <li class="nav-item"><a href="../pos/index.php" class="nav-link"><i class="fas fa-cash-register nav-icon"></i><p>Về trang bán hàng</p></a></li>
             </ul>
@@ -86,9 +94,12 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
 
   <div class="content-wrapper">
     <div class="content-header">
+        
       <div class="container-fluid">
+        
         <div class="row mb-2 align-items-center">
           <div class="col-sm-6 d-flex align-items-center">
+            
               <h1 class="m-0 mr-3" id="page-title">Danh sách món</h1>
               
               <span id="btn-group-menu" class="mode-section"><button class="btn btn-success btn-sm shadow-sm" data-toggle="modal" data-target="#modalAddItem"><i class="fas fa-plus-circle"></i> Thêm món mới</button></span>
@@ -123,24 +134,33 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
         
         <div id="hienthi-sanpham"></div>
 
-        <div id="hienthi-warehouse" class="mode-section">
-            <div class="card">
-                <div class="card-header bg-navy">
-                    <h3 class="card-title">Tình trạng kho hàng & Cài đặt cảnh báo</h3>
+        <div id="hienthi-warehouse" class="mode-section" style="display:none">
+            <div class="card card-warning card-outline">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-clipboard-list"></i> Cấu hình mức cảnh báo tồn kho
+                    </h3>
+                    <div class="card-tools">
+                        <button class="btn btn-primary btn-sm" onclick="luuCauHinhKho()">
+                            <i class="fas fa-save"></i> Lưu thay đổi
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body table-responsive p-0">
-                    <table class="table table-hover text-nowrap">
+                    <div class="alert alert-light m-2">
+                        <i class="fas fa-info-circle text-info"></i> Nhập số lượng tối thiểu vào cột <b>"Mức báo động"</b>. Nếu tồn kho thực tế thấp hơn mức này, hệ thống sẽ báo đỏ.
+                    </div>
+                    <table class="table table-hover table-striped text-nowrap">
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>Tên nguyên liệu</th>
-                                <th>Đơn vị</th>
-                                <th>Tồn kho hiện tại</th>
-                                <th>Mức cảnh báo (Min)</th>
-                                <th>Hành động</th>
+                                <th style="width: 30%;">Nguyên liệu</th>
+                                <th class="text-center" style="width: 20%;">Tồn hiện tại</th>
+                                <th class="text-center" style="width: 20%;">Mức báo động (Min)</th>
+                                <th class="text-center" style="width: 15%;">Đơn vị</th>
+                                <th class="text-center" style="width: 15%;">Trạng thái</th>
                             </tr>
                         </thead>
-                        <tbody id="warehouse-table-body">
+                        <tbody id="tbl-stock-body">
                             </tbody>
                     </table>
                 </div>
@@ -295,7 +315,8 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
         $('#report_start').val(rptStart);
 
         taiNoiDung();
-        loadIngredients();
+        loadIngredients(); // Tải danh sách nguyên liệu để dùng cho Modal thêm món
+        loadStockData();   // Tải dữ liệu kho để cập nhật badge cảnh báo
         updateSelectUsers(); 
         $('#searchInput').on('keyup', function(){ taiNoiDung(); });
     });
@@ -310,7 +331,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
         $('#searchInput').val('');
         $('.nav-link').removeClass('active');
         $('.mode-section').hide();
-        $('#hienthi-sanpham, #hienthi-baocao, #hienthi-schedule').hide();
+        $('#hienthi-sanpham, #hienthi-baocao, #hienthi-schedule, #hienthi-warehouse').hide();
         $('#searchForm').show();
 
         if(mode == 'menu') {
@@ -327,6 +348,14 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
             $('#link-report').addClass('active'); $('#page-title').text('Báo cáo doanh thu'); $('#searchForm').hide(); $('#report-controls').show(); $('#hienthi-baocao').show(); taiBaoCao();
         } else if(mode == 'schedule') {
             $('#link-schedule').addClass('active'); $('#page-title').text('Lịch làm việc'); $('#searchForm').hide(); $('#btn-group-schedule').show(); $('#hienthi-schedule').show(); taiLichLamViec();
+        
+        // --- CHẾ ĐỘ KHO MỚI ---
+        } else if(mode == 'stock') {
+            $('#link-stock').addClass('active'); 
+            $('#page-title').text('Cảnh báo & Cấu hình kho'); 
+            $('#searchForm').hide(); // Ẩn thanh tìm kiếm nếu không dùng
+            $('#hienthi-warehouse').show(); 
+            loadStockData(); // Gọi hàm tải dữ liệu kho
         }
     };
 
@@ -339,6 +368,90 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
         $('#searchInput').val('');
         taiNoiDung();
     };
+
+    // --- LOGIC QUẢN LÝ KHO (NEW) ---
+    function loadStockData() {
+        $('#tbl-stock-body').html('<tr><td colspan="5" class="text-center">Đang tải dữ liệu...</td></tr>');
+        
+        $.ajax({
+            url: 'api/get_ingredients.php', 
+            dataType: 'json',
+            success: function(data) {
+                var html = '';
+                var warningCount = 0;
+                
+                data.forEach(function(item) {
+                    var qty = parseFloat(item.quantity);
+                    var min = parseFloat(item.min_quantity) || 0; // Mặc định là 0 nếu chưa cài
+                    var isLow = qty <= min; // Kiểm tra xem có thấp hơn mức tối thiểu không
+                    
+                    if (isLow) warningCount++;
+
+                    // Tạo giao diện từng dòng
+                    var statusHtml = isLow 
+                        ? '<span class="badge badge-danger">Sắp hết hàng</span>' 
+                        : '<span class="badge badge-success">Ổn định</span>';
+                    
+                    // Tô màu nền nhẹ cho dòng cảnh báo
+                    var rowStyle = isLow ? 'background-color: #fff3cd;' : '';
+
+                    html += `<tr style="${rowStyle}">
+                        <td class="align-middle font-weight-bold">${item.name}</td>
+                        <td class="text-center align-middle ${isLow ? 'text-danger font-weight-bold' : ''}">${qty}</td>
+                        <td class="text-center">
+                            <input type="number" class="form-control form-control-sm text-center input-min-qty mx-auto" 
+                                   style="max-width: 100px; border-color: ${isLow ? '#dc3545' : '#ced4da'}"
+                                   data-id="${item.id}" value="${min}" step="0.1" min="0">
+                        </td>
+                        <td class="text-center align-middle">${item.unit}</td>
+                        <td class="text-center align-middle">${statusHtml}</td>
+                    </tr>`;
+                });
+
+                $('#tbl-stock-body').html(html);
+                
+                // Cập nhật số lượng cảnh báo lên Menu bên trái
+                if (warningCount > 0) {
+                    $('#badge-stock-sidebar').text(warningCount).show();
+                } else {
+                    $('#badge-stock-sidebar').hide();
+                }
+            },
+            error: function() {
+                $('#tbl-stock-body').html('<tr><td colspan="5" class="text-center text-danger">Lỗi kết nối server!</td></tr>');
+            }
+        });
+    }
+
+    window.luuCauHinhKho = function() {
+        var updates = [];
+        // Quét tất cả các ô input để lấy giá trị mới
+        $('.input-min-qty').each(function() {
+            updates.push({
+                id: $(this).data('id'),
+                min_quantity: $(this).val()
+            });
+        });
+
+        // Gửi lên server
+        $.ajax({
+            url: 'api/update_min_stock.php',
+            type: 'POST',
+            data: { data: JSON.stringify(updates) },
+            dataType: 'json',
+            success: function(res) {
+                if(res.status == 'success') {
+                    alert('Đã cập nhật mức cảnh báo thành công!');
+                    loadStockData(); // Tải lại bảng để cập nhật màu sắc/trạng thái
+                } else {
+                    alert('Lỗi: ' + res.message);
+                }
+            },
+            error: function() {
+                alert('Lỗi kết nối khi lưu dữ liệu! Hãy kiểm tra file update_min_stock.php');
+            }
+        });
+    }
 
     // --- LOGIC BÁO CÁO ---
     window.locBaoCao = function(e) { 
@@ -386,7 +499,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
         });
     }
 
-    // --- LOGIC LỊCH LÀM VIỆC (Đã sửa lỗi lệch ngày) ---
+    // --- LOGIC LỊCH LÀM VIỆC ---
     function taiLichLamViec() {
         $.ajax({
             url: 'api/get_schedules.php', type: 'GET', data: {start_date: currentWeekStart}, dataType: 'json',
@@ -397,7 +510,6 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
     function renderScheduleTable(data, startDate) {
         $('.table-schedule td').html(''); $('.btn-add-shift').remove();
         
-        // Tạo đối tượng Date từ chuỗi YYYY-MM-DD để tránh lệch múi giờ
         var parts = startDate.split('-');
         var start = new Date(parts[0], parts[1] - 1, parts[2]); 
         
@@ -411,7 +523,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
             d.setDate(start.getDate() + i); 
             
             $('#d-'+i).text(formatDate(d));
-            var dateStr = getLocalDateString(d); // Sử dụng hàm format local
+            var dateStr = getLocalDateString(d); 
             
             $('#cell-morning-'+i).append(`<button class="btn btn-outline-primary btn-xs btn-add-shift" onclick="openAddShift('${dateStr}', 'morning')">+ Thêm</button>`);
             $('#cell-afternoon-'+i).append(`<button class="btn btn-outline-primary btn-xs btn-add-shift" onclick="openAddShift('${dateStr}', 'afternoon')">+ Thêm</button>`);
@@ -419,15 +531,12 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
         }
         
         data.forEach(function(item){
-            // Tính toán chênh lệch ngày
             var itemDateParts = item.shift_date.split('-');
             var itemDate = new Date(itemDateParts[0], itemDateParts[1] - 1, itemDateParts[2]);
             
-            // diffTime tính ra mili giây
             var diffTime = itemDate - start;
             var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
 
-            // Chỉ render nếu nằm trong tuần hiện tại (0-6)
             if (diffDays >= 0 && diffDays <= 6) {
                 var cellId = '#cell-' + item.shift_type + '-' + diffDays;
                 $(cellId).prepend(`<div class="shift-item"><span>${item.fullname}</span><i class="fas fa-times btn-del-shift" onclick="xoaCa(${item.id})"></i></div>`);
@@ -447,7 +556,6 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
     
     function openAddShift(d, t) { 
         $('#sch_date').val(d); $('#sch_type').val(t); 
-        // Hiển thị ngày tháng đẹp cho người dùng xem
         var parts = d.split('-');
         var displayDate = parts[2] + '/' + parts[1] + '/' + parts[0];
         $('#lbl_date').text(displayDate); 
@@ -476,7 +584,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
     function xoaCa(id) { if(confirm("Xóa?")) $.ajax({ url: 'api/delete_schedule.php', type: 'POST', data: {id: id}, success: function(){ taiLichLamViec(); } }); }
     function formatDate(d) { return d.getDate()+'/'+(d.getMonth()+1); }
     window.taiNoiDung = function() {
-        if(currentMode == 'report' || currentMode == 'schedule') return;
+        if(currentMode == 'report' || currentMode == 'schedule' || currentMode == 'stock') return;
         var k = $('#searchInput').val(); var url='', d={search: k};
         if (currentMode == 'menu') { url='api/get_items.php'; d.category=currentCategory; } 
         else if (currentMode == 'user') url='api/get_users.php';

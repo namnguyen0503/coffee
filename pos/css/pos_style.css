@@ -618,3 +618,26 @@ html {
     color:#000;
 }
 
+
+
+
+/* Màn hình điện thoại: 2 cột */
+.custom-grid-5 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 15px; /* Khoảng cách giữa các ô */
+}
+
+/* Màn hình Tablet trở lên: 3 cột */
+@media (min-width: 768px) {
+    .custom-grid-5 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Màn hình Desktop lớn: 5 cột (Cái bạn cần) */
+@media (min-width: 1200px) {
+    .custom-grid-5 {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}

@@ -1,7 +1,11 @@
 <?php
 session_start();
 require_once '../includes/db_connection.php';
+require_once __DIR__ . '/../includes/db_connection.php';
+
 global $mysqli;
+
+
 
 // Bảo vệ trang: Chỉ nhân viên hoặc admin đã đăng nhập mới vào được
 if (!isset($_SESSION['user_id'])|| ($_SESSION['role'] !== 'staff' && $_SESSION['role'] !== 'admin')) {
@@ -13,12 +17,24 @@ $user_id = $_SESSION['user_id'];
 $fullname = $_SESSION['fullname'];
 
 // 1. Thống kê nhanh trong ngày của nhân viên này
-$today = date('Y-m-d');
-$stats_query = "SELECT COUNT(id) as total_orders, SUM(total_price) as total_revenue 
-                FROM orders 
-                WHERE user_id = $user_id AND DATE(order_date) = '$today' AND status = 'paid'";
-$stats_result = $mysqli->query($stats_query);
-$stats = $stats_result->fetch_assoc();
+$stmt = $mysqli->prepare("
+    SELECT 
+        COUNT(*) AS total_orders,
+        COALESCE(SUM(CASE 
+            WHEN final_amount IS NOT NULL AND final_amount > 0 THEN final_amount
+            ELSE total_price
+        END), 0) AS total_revenue
+    FROM orders
+    WHERE user_id = ?
+      AND status = 'paid'
+      AND order_date >= CONCAT(CURDATE(), ' 00:00:00')
+      AND order_date <  DATE_ADD(CONCAT(CURDATE(), ' 00:00:00'), INTERVAL 1 DAY)
+");
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$stats = $stmt->get_result()->fetch_assoc();
+$stmt->close();
+
 
 // 2. Lấy danh sách nguyên liệu sắp hết để cảnh báo nhân viên
 $low_stock_query = "SELECT name, quantity, unit FROM ingredients WHERE quantity <= min_quantity LIMIT 5";

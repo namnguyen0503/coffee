@@ -234,7 +234,7 @@ while ($row = $recipe_result->fetch_assoc()) {
 
         <div class="cart-sidebar">
             <div class="cart-header">
-                <h5 class="mb-0"><i class="fa-solid fa-receipt me-2"></i>Hóa Đơn</h5>
+                <h5 class="mb-0">Hóa Đơn</h5>
             </div>
             
             <ul id="cart-list" class="list-group list-group-flush cart-items-container">

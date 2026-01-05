@@ -72,7 +72,7 @@ $users = $mysqli->query("SELECT id, fullname FROM users ORDER BY fullname ASC");
                 <?php endwhile; ?>
             </select>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-1">
             <label class="form-label small fw-bold">Loại:</label>
             <select id="filter-type" class="form-select form-select-sm filter-input">
                 <option value="">-- Tất cả --</option>
@@ -93,7 +93,15 @@ $users = $mysqli->query("SELECT id, fullname FROM users ORDER BY fullname ASC");
              <button class="btn btn-dark btn-sm w-100 mt-4" onclick="resetFilters()">
                 <i class="fa-solid fa-rotate"></i> Reset
              </button>
+             
         </div>
+        <div class="col-md-1">
+            <button id="btn-export-excel" class="btn btn-success btn-sm w-100 mt-4">
+            <i class="fa-solid fa-file-excel"></i> Xuất Excel
+</button>
+
+        </div>
+        
     </div>
 
     <div class="card card-stock">
@@ -257,5 +265,27 @@ $users = $mysqli->query("SELECT id, fullname FROM users ORDER BY fullname ASC");
     document.addEventListener('DOMContentLoaded', () => loadHistory(true));
 
 </script>
+<script>
+document.getElementById('btn-export-excel')?.addEventListener('click', () => {
+    const params = new URLSearchParams();
+
+    const dateStart = document.getElementById('filter-date-start')?.value || '';
+    const dateEnd   = document.getElementById('filter-date-end')?.value || '';
+    const ing       = document.getElementById('filter-ing')?.value || '';
+    const type      = document.getElementById('filter-type')?.value || '';
+    const user      = document.getElementById('filter-user')?.value || '';
+
+    if (dateStart) params.append('date_start', dateStart);
+    if (dateEnd)   params.append('date_end', dateEnd);
+    if (ing)       params.append('ingredient_id', ing);
+    if (type)      params.append('type', type);
+    if (user)      params.append('user_id', user);
+
+    // Gọi endpoint export (cùng folder warehouse)
+    const url = 'export_history_excel.php' + (params.toString() ? ('?' + params.toString()) : '');
+    window.location.href = url;
+});
+</script>
+
 </body>
 </html>

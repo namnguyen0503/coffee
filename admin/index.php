@@ -597,13 +597,29 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
     window.themVoucher = function(e) { e.preventDefault(); $.ajax({ url: 'api/add_voucher.php', type: 'POST', data: $('#formAddVoucher').serialize(), dataType: 'json', success: function(res) { if(res.status == 'success') { alert(res.message); $('#modalAddVoucher').modal('hide'); $('#formAddVoucher')[0].reset(); taiNoiDung(); } else { alert(res.message); } } }); }
     window.xoaVoucher = function(id) { if(!confirm("Xóa mã này?")) return; $.ajax({ url: 'api/delete_voucher.php', type: 'POST', data: {id: id}, dataType: 'json', success: function(res) { taiNoiDung(); } }); }
     window.xuLyThemUser = function(e) { e.preventDefault(); $.ajax({ url: 'api/add_user.php', type: 'POST', data: $('#formAddUser').serialize(), dataType: 'json', success: function(res) { if(res.status=='success'){ alert(res.message); $('#modalAddUser').modal('hide'); taiNoiDung(); } else alert(res.message); } }); };
-    window.xuLySuaUser = function(e) { e.preventDefault(); $.ajax({ url: 'api/update_user.php', type: 'POST', data: $('#formEditUser').serialize(), dataType: 'json', success: function(res) { if(res.status=='success'){ alert(res.message); $('#modalEditUser').modal('hide'); taiNoiDung(); } else alert(res.message); } }); };
+    window.xuLySuaUser = function(e) { 
+        e.preventDefault(); $.ajax({
+             url: 'api/update_user.php', type: 'POST',
+             data: $('#formEditUser').serialize(), 
+             dataType: 'json', success: function(res) { 
+                if(res.status=='success'){ alert(res.message); 
+                    $('#modalEditUser').modal('hide'); taiNoiDung(); 
+                } else alert(res.message); } }); };
     $(document).on('click', '.btn-edit-user', function(){ $('#edit_user_id').val($(this).data('id')); $('#edit_user_fullname').val($(this).data('fullname')); $('#edit_user_username').val($(this).data('username')); $('#edit_user_role').val($(this).data('role')); $('#edit_user_status').val($(this).data('status')); $('#modalEditUser').modal('show'); });
     window.loadIngredients = function() { $.ajax({ url: 'api/get_ingredients.php', dataType: 'json', success: function(data) { ingredientsList = data; } }); }
     window.addIngredientRow = function(containerId, ingId = null, qty = '') { var options = '<option value="">-- Chọn NL --</option>'; if(ingredientsList.length > 0) ingredientsList.forEach(function(ing) { var selected = (ing.id == ingId) ? 'selected' : ''; options += `<option value="${ing.id}" ${selected}>${ing.name} (${ing.unit})</option>`; }); var html = `<div class="d-flex mb-2 align-items-center"><select name="ing_id[]" class="form-control form-control-sm mr-2" style="width:60%">${options}</select><input type="number" step="0.01" name="ing_qty[]" class="form-control form-control-sm mr-2" style="width:25%" value="${qty}"><button type="button" class="btn btn-sm btn-danger" onclick="$(this).parent().remove()">X</button></div>`; $('#' + containerId).append(html); };
     window.themMon = function(e) { e.preventDefault(); var fd = new FormData(document.getElementById('formAdd')); $.ajax({ url: 'api/add_item.php', type: 'POST', data: fd, contentType: false, processData: false, dataType: 'json', success: function(res) { if(res.status=='success'){ $('#modalAddItem').modal('hide'); alert(res.message); $('#formAdd')[0].reset(); $('#recipe-container-add').html(''); taiNoiDung(); } else alert(res.message); } }); };
     $(document).on('click', '.btn-edit', function(e){ e.preventDefault(); var id = $(this).data('id'); $('#edit_id').val(id); $('#edit_name').val($(this).data('name')); $('#edit_price').val($(this).data('price').toString().replace(/\./g, '')); $('#edit_category').val($(this).data('category')); $('#preview_img').attr('src', $(this).data('img')); $('#recipe-container-edit').html(''); $.ajax({ url: 'api/get_recipe_detail.php', data: {product_id: id}, dataType: 'json', success: function(recipes) { if(recipes && recipes.length > 0) recipes.forEach(r => addIngredientRow('recipe-container-edit', r.ingredient_id, r.quantity_required)); else addIngredientRow('recipe-container-edit'); } }); $('#modalEdit').modal('show'); });
-    window.luuSua = function(e) { e.preventDefault(); var fd = new FormData(document.getElementById('formEdit')); $.ajax({ url: 'api/update_item.php', type: 'POST', data: fd, contentType: false, processData: false, dataType: 'json', success: function(res){ if(res.status=='success'){ $('#modalEdit').modal('hide'); alert('Cập nhật xong!'); taiNoiDung(); } else alert(res.message); } }); };
+    window.luuSua = function(e) {
+         e.preventDefault(); 
+         var fd = new FormData(document.getElementById('formEdit')); 
+         $.ajax({ url: 'api/update_item.php', 
+            type: 'POST', 
+            data: fd, 
+            contentType: false, 
+            processData: false, 
+            dataType: 'json', success: 
+            function(res){ if(res.status=='success'){ $('#modalEdit').modal('hide'); alert('Cập nhật xong!'); taiNoiDung(); } else alert(res.message); } }); };
     $(document).on('click', '.btn-delete', function(){ $('#idDelete').val($(this).data('id')); $('#modalDelete').modal('show'); });
     window.xacNhanXoa = function() { $.ajax({ url: 'api/delete_item.php', type: 'POST', data: {id: $('#idDelete').val()}, dataType: 'json', success: function(res){ $('#modalDelete').modal('hide'); if(res.status=='success') taiNoiDung(); else alert(res.message); } }); };
     

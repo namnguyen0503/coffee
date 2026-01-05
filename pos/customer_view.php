@@ -177,23 +177,33 @@
         }
 
         items.forEach(item => {
-            const itemTotal = item.price * item.quantity;
-            const html = `
-                <div class="cart-item">
-                    <img src="${item.img}" class="item-img" onerror="this.src='https://placehold.co/60'">
-                    <div class="item-info">
-                        <div class="item-name">${item.name}</div>
-                        <div class="item-meta">
-                            ${item.quantity} x ${parseInt(item.price).toLocaleString('vi-VN')}
-                        </div>
-                    </div>
-                    <div class="item-total">
-                        ${itemTotal.toLocaleString('vi-VN')} đ
-                    </div>
+    const itemTotal = item.price * item.quantity;
+
+    const maxPossible = Number(item.max_possible ?? item.maxPossible);
+    const isOver = !!item.is_over || (Number.isFinite(maxPossible) && Number(item.quantity) > maxPossible);
+
+    const shortageLine = (isOver && Number.isFinite(maxPossible))
+        ? `<div class="text-danger small mt-1">Không đủ nguyên liệu: tối đa ${maxPossible} (thiếu ${item.quantity - maxPossible})</div>`
+        : '';
+
+    const html = `
+        <div class="cart-item">
+            <img src="${item.img}" class="item-img" onerror="this.src='https://placehold.co/60'">
+            <div class="item-info">
+                <div class="item-name">${item.name}</div>
+                <div class="item-meta">
+                    ${item.quantity} x ${parseInt(item.price).toLocaleString('vi-VN')}
                 </div>
-            `;
-            cartContainer.insertAdjacentHTML('beforeend', html);
-        });
+                ${shortageLine}
+            </div>
+            <div class="item-total">
+                ${itemTotal.toLocaleString('vi-VN')} đ
+            </div>
+        </div>
+    `;
+    cartContainer.insertAdjacentHTML('beforeend', html);
+});
+
     }
 </script>
 </body>

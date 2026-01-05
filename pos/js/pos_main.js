@@ -13,6 +13,41 @@ const modalPaymentEl = document.getElementById('modalPayment');
 modalPaymentEl.addEventListener('hidden.bs.modal', function () {
     customerChannel.postMessage({ type: 'RESET' });
 });
+// [ADD] chống spam thông báo (theo key) trong khoảng thời gian ngắn
+const __customerNoticeThrottle = new Map();
+
+/**
+ * Gửi thông báo sang customer_view.php qua BroadcastChannel
+ * @param {string} message
+ * @param {'info'|'warning'|'error'|'success'} level
+ * @param {object} meta
+ * @param {string} throttleKey - key để chống spam (vd: productId + action)
+ * @param {number} throttleMs
+ */
+function postCustomerNotice(message, level = 'warning', meta = {}, throttleKey = '', throttleMs = 1200) {
+  try {
+    if (typeof customerChannel === 'undefined') return;
+
+    // Chống spam: nếu cùng key trong throttleMs thì bỏ qua
+    if (throttleKey) {
+      const now = Date.now();
+      const last = __customerNoticeThrottle.get(throttleKey) || 0;
+      if (now - last < throttleMs) return;
+      __customerNoticeThrottle.set(throttleKey, now);
+    }
+
+    customerChannel.postMessage({
+      type: 'NOTICE',
+      level,
+      message,
+      meta,
+      at: Date.now()
+    });
+  } catch (e) {
+    // Không làm crash POS nếu popup khách chưa mở / trình duyệt không hỗ trợ
+    console.warn('postCustomerNotice failed:', e);
+  }
+}
 
 function openCustomerScreen() {
     // Mở popup window
@@ -118,8 +153,22 @@ function saveCartToStorage() {
         updateProductAvailability(); 
     }
 }
+// Đánh dấu item vượt tồn để dùng cho: viền đỏ + gửi sang customer_view
+function refreshCartValidation() {
+    cartItems.forEach(it => {
+        const max = calculateMaxPossibleExcludingCart(it.id);
+        it.max_possible = max;
+        it.is_over = Number(it.quantity) > max;
+    });
+}
+
+function getOverItems() {
+    refreshCartValidation();
+    return cartItems.filter(it => it.is_over);
+}
 
 function updateTotalAmount() {
+    refreshCartValidation();
     // 1. Tính tổng tiền gốc (Sum Price * Qty)
     let totalOriginal = 0;
     cartItems.forEach(item => {
@@ -274,8 +323,10 @@ function renderCart() {
             </div>
             <div class="d-flex align-items-center">
                 <button class="btn btn-sm btn-outline-secondary me-1 btn-minus" data-index="${index}">-</button>
-                <input type="number" class="form-control form-control-sm text-center quantity-input fw-bold mx-1" 
-                       value="${item.quantity}" data-index="${index}" style="width: 40px;">
+                <input type="number"
+       class="form-control form-control-sm text-center quantity-input fw-bold mx-1 ${item.is_over ? 'border border-2 border-danger' : ''}"
+       value="${item.quantity}" data-index="${index}" style="width: 40px;">
+
                 <button class="btn btn-sm btn-outline-secondary ms-1 btn-plus" data-index="${index}">+</button>
                 <button class="btn btn-sm btn-danger ms-2 btn-remove" data-index="${index}"><i class="fa-solid fa-trash"></i></button>
             </div>
@@ -304,50 +355,39 @@ document.querySelector('#product-list-container')?.addEventListener('click', fun
 });
 
 function addItemToCart(id, name, price) {
-    // 1. Kiểm tra tồn kho (Logic cũ của bạn)
+    const itemIndex = cartItems.findIndex(item => item.id === id);
+
+    // Chỉ chặn khi THÊM MỚI mà maxPossible <= 0 (món hết hoàn toàn)
+    // (Nếu đã có trong giỏ thì vẫn cho tăng vượt theo yêu cầu)
     const maxPossible = calculateMaxPossibleExcludingCart(id);
-    if (maxPossible <= 0) {
+    if (itemIndex === -1 && maxPossible <= 0) {
         showCustomAlert("Món này tạm hết hàng hoặc không đủ nguyên liệu!", "warning");
-        return; 
+        return;
     }
 
-    const itemIndex = cartItems.findIndex(item => item.id === id); 
-    
     if (itemIndex > -1) {
-        // A. Nếu món đã có trong giỏ -> Tăng số lượng
-        if (cartItems[itemIndex].quantity < maxPossible) {
-            cartItems[itemIndex].quantity += 1;
-        } else {
-            showCustomAlert("Đã đạt giới hạn tồn kho cho món này!", "warning");
-        }
+        cartItems[itemIndex].quantity += 1; // cho vượt
     } else {
-        // B. Nếu món chưa có -> Thêm mới (CẦN LẤY ẢNH Ở ĐÂY)
-        
-        // --- [NEW] Logic lấy ảnh tự động từ thẻ HTML ---
-        let imgUrl = 'https://placehold.co/60'; // Ảnh mặc định nếu lỗi
-        
-        // Tìm thẻ div sản phẩm dựa trên data-id
+        // giữ nguyên đoạn lấy ảnh của bạn
+        let imgUrl = 'https://placehold.co/60';
         const productEl = document.querySelector(`.product-item[data-id="${id}"]`);
         if (productEl) {
             const imgTag = productEl.querySelector('img');
-            if (imgTag) {
-                imgUrl = imgTag.src; // Lấy src ảnh thật
-            }
+            if (imgTag) imgUrl = imgTag.src;
         }
-        // -----------------------------------------------
 
-        cartItems.push({ 
-            id: id, 
-            name: name, 
-            price: price, 
+        cartItems.push({
+            id: id,
+            name: name,
+            price: price,
             quantity: 1,
-            img: imgUrl // <--- QUAN TRỌNG: Lưu ảnh để gửi sang màn hình khách
+            img: imgUrl
         });
     }
 
     renderCart();
-    updateTotalAmount(); // Hàm này sẽ bắn tín hiệu sang màn hình khách
-    saveCartToStorage(); 
+    updateTotalAmount();
+    saveCartToStorage();
 }
 
 // Click các nút trong giỏ hàng (+, -, Xóa)
@@ -357,9 +397,8 @@ document.getElementById('cart-list')?.addEventListener('click', function(event) 
     const index = parseInt(target.dataset.index);
 
     if (target.matches('.btn-plus')) {
-        const max = calculateMaxPossibleExcludingCart(cartItems[index].id);
-        if (cartItems[index].quantity < max) cartItems[index].quantity++;
-    } else if (target.matches('.btn-minus')) {
+    cartItems[index].quantity++;
+} else if (target.matches('.btn-minus')) {
         cartItems[index].quantity--;
         if (cartItems[index].quantity <= 0) cartItems.splice(index, 1);
     } else if (target.matches('.btn-remove')) {
@@ -376,23 +415,35 @@ document.getElementById('cart-list')?.addEventListener('input', function(event) 
         const input = event.target;
         const index = parseInt(input.dataset.index);
         const item = cartItems[index];
+
         let val = input.value;
         if (val === '') return;
 
         let newQty = parseInt(val);
-        let maxPossible = calculateMaxPossibleExcludingCart(item.id);
-        
-        if (newQty > maxPossible) {
-            newQty = maxPossible;
-            input.value = newQty;
-            input.classList.add('input-error');
-            setTimeout(() => input.classList.remove('input-error'), 500);
-        }
-        
+        if (isNaN(newQty)) return;
+        if (newQty < 1) newQty = 1;
+
         item.quantity = newQty;
+
+        // Recompute max & flag
+        const maxPossible = calculateMaxPossibleExcludingCart(item.id);
+        item.max_possible = maxPossible;
+        item.is_over = newQty > maxPossible;
+
+        // Viền đỏ nếu vượt (không clamp)
+        if (item.is_over) {
+            input.classList.add('border', 'border-2', 'border-danger');
+            input.classList.add('input-error'); // rung/nháy nếu bạn đã có CSS
+            setTimeout(() => input.classList.remove('input-error'), 500);
+        } else {
+            input.classList.remove('border', 'border-2', 'border-danger');
+        }
+
+        // Update total giá của dòng
         const row = input.closest('li');
-        row.querySelector('.item-total-price').textContent = (item.quantity * item.price).toLocaleString('vi-VN');
-        
+        row.querySelector('.item-total-price').textContent =
+            (item.quantity * item.price).toLocaleString('vi-VN');
+
         updateTotalAmount();
         updateProductAvailability();
         localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
@@ -432,6 +483,14 @@ function handleCheckoutInternal() {
     // 1. Kiểm tra giỏ hàng
     if (cartItems.length === 0) {
         showCustomAlert("Giỏ hàng rỗng! Vui lòng chọn món trước khi thanh toán.");
+        return;
+    }
+    const overItems = getOverItems();
+    if (overItems.length > 0) {
+        const msg = overItems
+            .map(i => `${i.name}: yêu cầu ${i.quantity}, tối đa ${i.max_possible}`)
+            .join(' | ');
+        showCustomAlert("Không thể thanh toán: không đủ nguyên liệu. " + msg, "warning");
         return;
     }
 
@@ -612,19 +671,26 @@ function handleCancel() {
     if (cartItems.length === 0) {
         showCustomAlert("Giỏ hàng rỗng! Không có gì để hủy.", "warning");
         return;
-    }   
-    
-    // THAY confirm() BẰNG showCustomConfirm
-    showCustomConfirm("Bạn có chắc chắn muốn hủy đơn hàng hiện tại không?", function() {
-        // Đây là code sẽ chạy khi bấm "Đồng ý"
+    }
+
+    showCustomConfirm("Bạn có chắc chắn muốn hủy đơn hàng hiện tại không?", function () {
         cartItems = [];
         localStorage.removeItem(CART_STORAGE_KEY);
+
         renderCart();
-        updateTotalAmount();
+        updateTotalAmount();        // gửi UPDATE_CART (giỏ trống) sang customer view
+        updateProductAvailability(); // ✅ FIX: tính lại tồn kho / badge menu ngay lập tức
+
+        // (tuỳ chọn nhưng nên có) đưa customer view về màn hình welcome sạch sẽ
+        if (typeof customerChannel !== 'undefined') {
+            customerChannel.postMessage({ type: 'RESET' });
+        }
+
         console.log('ĐƠN HÀNG ĐÃ BỊ HỦY BỞI NGƯỜI DÙNG.');
         showCustomAlert("Đơn hàng đã được hủy.", "info");
     });
 }
+
 
 document.getElementById('checkout-btn')?.addEventListener('click', openPaymentModal);
 document.getElementById('cancel-btn')?.addEventListener('click', handleCancel);
@@ -718,51 +784,6 @@ document.getElementById('cart-list')?.addEventListener('input', function(event) 
 
 
 
-// Hàm xử lý in tách đôi: In Bill -> Đợi -> In Sticker
-// function performDualPrinting() {
-//     const body = document.body;
-    
-//     // --- LẦN 1: CHUẨN BỊ IN BILL ---
-//     // 1. Reset class cũ (phòng hờ)
-//     body.classList.remove('print-mode-sticker');
-    
-//     // 2. Thêm class in Bill
-//     body.classList.add('print-mode-bill');
-    
-//     // 3. Gọi lệnh in
-//     window.print();
-    
-//     // 4. Xóa class in Bill ngay sau khi dialog in tắt (hoặc lệnh gửi đi)
-//     // Để trả lại trạng thái trắng cho lần in sau
-//     body.classList.remove('print-mode-bill');
-
-//     // --- LẦN 2: CHUẨN BỊ IN STICKER ---
-//     const hasStickers = document.querySelectorAll('.sticker-item').length > 0;
-
-//     if (hasStickers) {
-//         // Đợi 500ms - 1s để máy in nuốt lệnh 1, tránh bị nghẽn lệnh
-//         setTimeout(() => {
-//             if (confirm("In TEM DÁN CỐC (Sticker) ngay bây giờ?")) {
-//                 // 1. Thêm class in Sticker
-//                 body.classList.add('print-mode-sticker');
-                
-//                 // 2. Gọi lệnh in
-//                 window.print();
-                
-//                 // 3. Xóa class in Sticker
-//                 body.classList.remove('print-mode-sticker');
-//             }
-            
-//             // Xong xuôi thì ẩn hết đi
-//             document.getElementById('invoice-pos').classList.add('d-none');
-//             document.getElementById('sticker-container').classList.add('d-none');
-            
-//         }, 500);
-//     } else {
-//         // Nếu không có tem thì ẩn luôn invoice
-//         document.getElementById('invoice-pos').classList.add('d-none');
-//     }
-// }
 function performDualPrinting() {
     const body = document.body;
     
@@ -889,7 +910,15 @@ function checkVoucher() {
 function openPaymentModal() {
     // 1. Kiểm tra giỏ hàng trước
     if (cartItems.length === 0) {
-        showCustomAlert("Giỏ hàng rỗng!");
+        showCustomAlert("Giỏ hàng rỗng!", "warning");
+        return;
+    }
+    const overItems = getOverItems();
+    if (overItems.length > 0) {
+        const msg = overItems
+            .map(i => `${i.name}: yêu cầu ${i.quantity}, tối đa ${i.max_possible}`)
+            .join(' | ');
+        showCustomAlert("Không đủ nguyên liệu để lên đơn. " + msg, "warning");
         return;
     }
 

@@ -2,62 +2,64 @@
 require '../../includes/db_connection.php';
 $conn = connect_db();
 
-$category_id = isset($_GET['category']) ? (int)$_GET['category'] : 0; 
+// 1. Nhận tham số
+$category_id = isset($_GET['category']) ? (int)$_GET['category'] : 1;
 $search = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
 
-$sql = "SELECT * FROM products WHERE is_active = 1";
-if ($category_id > 0) $sql .= " AND category_id = $category_id";
-if (!empty($search)) $sql .= " AND name LIKE '%$search%'";
+// 2. Xây dựng SQL
+$sql = "SELECT * FROM products WHERE 1=1";
+
+if (!empty($search)) {
+    $sql .= " AND name LIKE '%$search%'";
+} else {
+    $sql .= " AND category_id = $category_id";
+}
 $sql .= " ORDER BY id DESC";
 
-$query = mysqli_query($conn, $sql);
+// 3. Thực thi
+$result = $conn->query($sql);
 
-if (mysqli_num_rows($query) > 0) {
+if ($result && $result->num_rows > 0) {
     echo '<div class="row">';
-    while ($row = mysqli_fetch_assoc($query)) {
-        $img_url = $row['image_url'];
-
-        // --- LOGIC XỬ LÝ ĐƯỜNG DẪN ẢNH (QUAN TRỌNG) ---
+    while($row = $result->fetch_assoc()){
         
-        // Trường hợp 1: Ảnh Upload (DB lưu "uploads/...") 
-        // -> Thêm "../" để lùi ra root lấy ảnh
-        if (strpos($img_url, 'uploads') === 0) {
-            $img_url = '../' . $img_url; 
+        // Đường dẫn ảnh
+        $dbPath = $row['image_url'];
+        if (strpos($dbPath, 'assets/') === 0) {
+            $displayImg = '../' . $dbPath; 
+        } else {
+            $displayImg = $dbPath; 
         }
-        // Trường hợp 2: Ảnh trong Assets (DB lưu "assets/..." mà thiếu "../")
-        // -> Thêm "../" để lùi ra root rồi mới vào assets (vì assets nằm ngang hàng admin)
-        elseif (strpos($img_url, 'assets') === 0) {
-             $img_url = '../' . $img_url;
-        }
-        // Trường hợp 3: DB đã lưu đúng "../assets/..." 
-        // -> Giữ nguyên (Đây là trường hợp chuẩn trong file SQL của bạn)
+        $fallbackImg = '../assets/dist/img/logo.png'; 
 
-        $price = number_format($row['price'], 0, ',', '.');
+        // Trạng thái
+        $statusLabel = ($row['status'] == 1) 
+            ? '<span class="badge badge-success" style="position:absolute; top:10px; right:10px; z-index:10;">Đang bán</span>' 
+            : '<span class="badge badge-secondary" style="position:absolute; top:10px; right:10px; z-index:10;">Ngừng bán</span>';
         
-        echo '
-        <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
-            <div class="card h-100 shadow-sm">
-                <div style="height: 120px; overflow: hidden; border-bottom: 1px solid #eee;">
-                    <img src="'.$img_url.'" class="card-img-top" alt="'.$row['name'].'" 
-                         style="width: 100%; height: 100%; object-fit: cover;"
-                         onerror="this.src=\'assets/dist/img/logo coffee.png\'">
+        $cardStyle = ($row['status'] == 0) ? 'opacity: 0.75; background: #f4f4f4;' : '';
+
+        echo '<div class="col-6 col-md-4 col-lg-3 mb-4">
+            <div class="card h-100 shadow-sm border-0" style="'.$cardStyle.'">
+                '.$statusLabel.'
+                <div style="height: 160px; overflow: hidden;" class="rounded-top">
+                    <img src="'.$displayImg.'" class="card-img-top w-100 h-100" style="object-fit: cover;" onerror="this.src=\''.$fallbackImg.'\'">
                 </div>
-                <div class="card-body p-2">
-                    <h5 class="card-title font-weight-bold" style="font-size: 1rem; height: 35px; overflow: hidden; margin-bottom: 5px;">'.$row['name'].'</h5>
-                    <p class="card-text text-danger font-weight-bold mb-2" style="font-size: 0.95rem;">'.$price.' đ</p>
+                <div class="card-body p-3 text-center d-flex flex-column justify-content-between">
+                    <div>
+                        <h6 class="font-weight-bold mb-1 text-dark">'.$row['name'].'</h6>
+                        <div class="text-danger font-weight-bold mb-2">'.number_format($row['price'], 0, ',', '.').' đ</div>
+                    </div>
                     
-                    <div class="d-flex justify-content-between">
-                        <button type="button" class="btn btn-sm btn-warning w-45 btn-edit" style="font-size: 0.85rem;"
-                            data-id="'.$row['id'].'"
-                            data-name="'.$row['name'].'"
-                            data-price="'.$row['price'].'"
-                            data-category="'.$row['category_id'].'"
-                            data-img="'.$img_url.'">
-                            <i class="fas fa-edit"></i> Sửa
-                        </button>
-                        <button type="button" class="btn btn-sm btn-danger w-45 btn-delete" style="font-size: 0.85rem;"
-                            data-id="'.$row['id'].'">
-                            <i class="fas fa-trash"></i> Xóa
+                    <div class="d-flex justify-content-center mt-2">
+                        <button class="btn btn-sm btn-warning btn-edit px-4 shadow-sm font-weight-bold" 
+                            data-id="'.$row['id'].'" 
+                            data-name="'.$row['name'].'" 
+                            data-price="'.$row['price'].'" 
+                            data-category="'.$row['category_id'].'" 
+                            data-img="'.$displayImg.'"  
+                            data-status="'.$row['status'].'">
+                            <i class="fas fa-edit"></i> Chỉnh sửa
                         </button>
                     </div>
                 </div>
@@ -66,6 +68,6 @@ if (mysqli_num_rows($query) > 0) {
     }
     echo '</div>';
 } else {
-    echo '<div class="col-12 text-center text-muted p-5"><h4>Không tìm thấy món nào.</h4></div>';
+    echo '<div class="text-center mt-5 text-muted">Không tìm thấy món nào.</div>';
 }
 ?>

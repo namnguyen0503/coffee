@@ -95,14 +95,63 @@ try {
     $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
     $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-    // Dòng mô tả bộ lọc
-    $filterText = "Bộ lọc: ";
-    $filterText .= ($filter_date_start ? "Từ {$filter_date_start} " : "");
-    $filterText .= ($filter_date_end   ? "Đến {$filter_date_end} " : "");
-    $filterText .= ($filter_type       ? " | Loại: {$filter_type}" : "");
-    $filterText .= ($filter_ing        ? " | Ingredient ID: {$filter_ing}" : "");
-    $filterText .= ($filter_user       ? " | User ID: {$filter_user}" : "");
-    $sheet->setCellValue('A2', trim($filterText));
+    // ---- Bộ lọc: hiển thị TÊN thay vì chỉ ID ----
+function db_scalar(mysqli $mysqli, string $sql, string $types = "", array $params = []) {
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) return null;
+
+    if ($types !== "" && !empty($params)) {
+        $stmt->bind_param($types, ...$params);
+    }
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $row = $res ? $res->fetch_row() : null;
+    $stmt->close();
+    return $row ? $row[0] : null;
+}
+
+$userName = null;
+$ingredientName = null;
+
+if (!empty($filter_user)) {
+    $userName = db_scalar($mysqli, "SELECT fullname FROM users WHERE id = ?", "i", [(int)$filter_user]);
+}
+if (!empty($filter_ing)) {
+    $ingredientName = db_scalar($mysqli, "SELECT name FROM ingredients WHERE id = ?", "i", [(int)$filter_ing]);
+}
+
+$typeLabel = "";
+if (!empty($filter_type)) {
+    if ($filter_type === "import") $typeLabel = "Nhập kho";
+    else if ($filter_type === "export") $typeLabel = "Xuất kho";
+    else $typeLabel = $filter_type;
+}
+
+$filterParts = [];
+if (!empty($filter_date_start)) $filterParts[] = "Từ: " . $filter_date_start;
+if (!empty($filter_date_end))   $filterParts[] = "Đến: " . $filter_date_end;
+
+if (!empty($filter_type)) {
+    $filterParts[] = "Loại: " . ($typeLabel ?: $filter_type);
+}
+
+if (!empty($filter_ing)) {
+    $filterParts[] = $ingredientName
+        ? "Nguyên liệu: {$ingredientName} (ID " . (int)$filter_ing . ")"
+        : "Nguyên liệu ID: " . (int)$filter_ing;
+}
+
+if (!empty($filter_user)) {
+    $filterParts[] = $userName
+        ? "Người thực hiện: {$userName} (ID " . (int)$filter_user . ")"
+        : "Người thực hiện ID: " . (int)$filter_user;
+}
+
+$filterText = "Bộ lọc: " . (count($filterParts) ? implode(" | ", $filterParts) : "Không có");
+$sheet->setCellValue('A2', $filterText);
+$sheet->mergeCells('A2:J2');
+$sheet->getStyle('A2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+
     $sheet->mergeCells('A2:J2');
     $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
 

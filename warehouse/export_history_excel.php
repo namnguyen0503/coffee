@@ -95,6 +95,63 @@ try {
     $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
     $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
+    function db_scalar(mysqli $mysqli, string $sql, string $types = "", array $params = []) {
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) return null;
+
+    if ($types !== "" && !empty($params)) {
+        $stmt->bind_param($types, ...$params);
+    }
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $row = $res ? $res->fetch_row() : null;
+    $stmt->close();
+    return $row ? $row[0] : null;
+}
+    $userName = null;
+$ingredientName = null;
+
+if (!empty($filter_user)) {
+    $userName = db_scalar($mysqli, "SELECT fullname FROM users WHERE id = ?", "i", [(int)$filter_user]);
+}
+
+if (!empty($filter_ing)) {
+    $ingredientName = db_scalar($mysqli, "SELECT name FROM ingredients WHERE id = ?", "i", [(int)$filter_ing]);
+}
+
+$typeLabel = "";
+if (!empty($filter_type)) {
+    if ($filter_type === "import") $typeLabel = "Nhập kho";
+    else if ($filter_type === "export") $typeLabel = "Xuất kho";
+    else $typeLabel = $filter_type; // fallback
+}
+    $filterParts = [];
+
+if (!empty($filter_date_start)) $filterParts[] = "Từ: " . $filter_date_start;
+if (!empty($filter_date_end))   $filterParts[] = "Đến: " . $filter_date_end;
+
+if (!empty($filter_type)) {
+    $filterParts[] = "Loại: " . ($typeLabel !== "" ? $typeLabel : $filter_type);
+}
+
+if (!empty($filter_ing)) {
+    $label = "Nguyên liệu";
+    $label .= $ingredientName ? (": " . $ingredientName . " (ID " . (int)$filter_ing . ")") : (" ID: " . (int)$filter_ing);
+    $filterParts[] = $label;
+}
+
+if (!empty($filter_user)) {
+    $label = "Người thực hiện";
+    $label .= $userName ? (": " . $userName . " (ID " . (int)$filter_user . ")") : (" ID: " . (int)$filter_user);
+    $filterParts[] = $label;
+}
+
+$filterText = "Bộ lọc: " . (count($filterParts) ? implode(" | ", $filterParts) : "Không có");
+$sheet->setCellValue('A2', $filterText);
+$sheet->mergeCells('A2:J2');
+
+
+
     // Dòng mô tả bộ lọc
     $filterText = "Bộ lọc: ";
     $filterText .= ($filter_date_start ? "Từ {$filter_date_start} " : "");

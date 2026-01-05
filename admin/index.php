@@ -606,8 +606,30 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin')) {
     window.luuSua = function(e) { e.preventDefault(); var fd = new FormData(document.getElementById('formEdit')); $.ajax({ url: 'api/update_item.php', type: 'POST', data: fd, contentType: false, processData: false, dataType: 'json', success: function(res){ if(res.status=='success'){ $('#modalEdit').modal('hide'); alert('Cập nhật xong!'); taiNoiDung(); } else alert(res.message); } }); };
     $(document).on('click', '.btn-delete', function(){ $('#idDelete').val($(this).data('id')); $('#modalDelete').modal('show'); });
     window.xacNhanXoa = function() { $.ajax({ url: 'api/delete_item.php', type: 'POST', data: {id: $('#idDelete').val()}, dataType: 'json', success: function(res){ $('#modalDelete').modal('hide'); if(res.status=='success') taiNoiDung(); else alert(res.message); } }); };
-    window.xemChiTietDon = function(orderId) { $.ajax({ url: 'api/get_order_detail.php', type: 'GET', data: { id: orderId }, success: function(data) { $('#order-detail-content').html(data); $('#modalOrderDetail').modal('show'); }, error: function() { alert('Lỗi: Không thể tải chi tiết đơn hàng.'); } }); };
-    window.xacNhanHuy = function(orderId) { if (!confirm('Bạn có chắc chắn muốn HỦY đơn hàng #' + orderId + '?\nNguyên liệu sẽ được hoàn lại kho và doanh thu ca làm việc sẽ bị trừ.')) { return; } $.ajax({ url: 'api/cancel_order.php', type: 'POST', data: { id: orderId }, dataType: 'json', success: function(res) { if (res.status == 'success') { alert(res.message); taiNoiDung(); } else { alert('Lỗi: ' + res.message); } }, error: function() { alert('Lỗi kết nối server khi thực hiện hủy đơn.'); } }); };
+    
+    window.xemChiTietDon = function(orderId) {
+     $.ajax({ url: 'api/get_order_detail.php', 
+     type: 'GET', data: { id: orderId }, 
+     success: function(data) { 
+     $('#order-detail-content').html(data); 
+     $('#modalOrderDetail').modal('show'); 
+     }, 
+     error: function() { 
+     alert('Lỗi: Không thể tải chi tiết đơn hàng.'); 
+     }}); };
+    window.xacNhanHuy = function(orderId) { 
+    if (!confirm('Bạn có chắc chắn muốn HỦY đơn hàng #' + orderId + '?\nNguyên liệu sẽ được hoàn lại kho và doanh thu ca làm việc sẽ bị trừ.')) { 
+    return; } 
+    $.ajax({ url: 'api/cancel_order.php', 
+    type: 'POST', data: { id: orderId }, 
+    dataType: 'json', 
+    success: function(res) { 
+    if (res.status == 'success') { 
+    alert(res.message); 
+    taiNoiDung(); } 
+    else { alert('Lỗi: ' + res.message); } }, 
+    error: function() { 
+    alert('Lỗi kết nối server khi thực hiện hủy đơn.'); } }); };
 </script>
 </body>
 </html>
